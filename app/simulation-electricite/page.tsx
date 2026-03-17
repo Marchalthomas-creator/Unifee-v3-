@@ -234,8 +234,8 @@ export default function SimulationElectricitePage() {
       const dateFinDetectee = extraireDateFin(text);
       if (dateFinDetectee) setDateFin(dateFinDetectee);
 
-      const contrat = detectTypeContrat(text);
-      setTypeContrat(contrat);
+      const contratDetecte = detectTypeContrat(text);
+      setTypeContrat(contratDetecte);
 
       const consoBase = extraireValeur(text, [
         /total consommation[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
@@ -278,12 +278,12 @@ export default function SimulationElectricitePage() {
         /(?:heures?\s*creuses?|hc)[^0-9]{0,50}([0-9\s]+[.,]?[0-9]*)\s*kwh/i
       );
 
-      if (contrat === "standard") {
+      if (contratDetecte === "standard") {
         if (consoBase) setConsommation(consoBase);
         if (prixBase) setPrixKwh(prixBase);
       }
 
-      if (contrat === "autres") {
+      if (contratDetecte === "autres") {
         if (consoBase) setConsommation(consoBase);
         if (prixBase) setPrixMoyenAutre(prixBase);
       }
@@ -297,7 +297,7 @@ export default function SimulationElectricitePage() {
       if (hpConsoMatch?.[1]) setConsoHP(parseFrenchNumber(hpConsoMatch[1]));
       if (hcConsoMatch?.[1]) setConsoHC(parseFrenchNumber(hcConsoMatch[1]));
 
-      if (contrat === "autres" && !libelleAutreContrat) {
+      if (contratDetecte === "autres" && !libelleAutreContrat) {
         setLibelleAutreContrat("Autre contrat détecté");
       }
 
@@ -884,9 +884,7 @@ export default function SimulationElectricitePage() {
 
               <div className="rounded-xl bg-slate-100 p-4">
                 <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {aboUnifeeHcHp} €
-                </p>
+                <p className="text-lg font-semibold text-slate-900">{aboUnifeeHcHp} €</p>
               </div>
             </div>
           )}
