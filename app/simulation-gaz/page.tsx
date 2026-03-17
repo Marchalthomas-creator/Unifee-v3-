@@ -17,7 +17,6 @@ export default function SimulationGazPage() {
 
   const [consommation, setConsommation] = useState("");
   const [prixKwh, setPrixKwh] = useState("");
-
   const [abonnement, setAbonnement] = useState("");
   const [taxes, setTaxes] = useState("");
 
@@ -48,9 +47,7 @@ export default function SimulationGazPage() {
       return;
     }
 
-    setMessageExtraction(
-      `Facture prête à être analysée : ${facture.name}`
-    );
+    setMessageExtraction(`Facture prête à être analysée : ${facture.name}`);
   }
 
   function calculer() {
@@ -115,48 +112,65 @@ export default function SimulationGazPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10">
       <div className="mx-auto max-w-md space-y-6">
-
         <h1 className="text-center text-3xl font-bold text-slate-900">
           Simulation Gaz
         </h1>
 
         <div className="space-y-5 rounded-2xl border bg-white p-6">
-
-          {/* CLIENT */}
           <div className="space-y-3">
             <h2 className="text-lg font-semibold">Informations client</h2>
 
-            <input
-              placeholder="Nom du client"
-              value={nomClient}
-              onChange={(e) => setNomClient(e.target.value)}
-              className="w-full rounded-xl border p-3"
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Nom du client
+              </label>
+              <input
+                value={nomClient}
+                onChange={(e) => setNomClient(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-            <input
-              placeholder="Ville"
-              value={ville}
-              onChange={(e) => setVille(e.target.value)}
-              className="w-full rounded-xl border p-3"
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Ville
+              </label>
+              <input
+                value={ville}
+                onChange={(e) => setVille(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-            <input
-              placeholder="Fournisseur actuel"
-              value={fournisseur}
-              onChange={(e) => setFournisseur(e.target.value)}
-              className="w-full rounded-xl border p-3"
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Fournisseur actuel
+              </label>
+              <input
+                value={fournisseur}
+                onChange={(e) => setFournisseur(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-            <input
-              type="date"
-              value={dateFin}
-              onChange={(e) => setDateFin(e.target.value)}
-              className="w-full rounded-xl border p-3"
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Date de fin d’engagement
+              </label>
+              <input
+                type="date"
+                value={dateFin}
+                onChange={(e) => setDateFin(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
           </div>
 
-          {/* FACTURE */}
           <div className="rounded-xl border bg-slate-50 p-4">
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Importer une facture
+            </label>
+
             <input
               type="file"
               accept="image/*,.pdf"
@@ -168,22 +182,23 @@ export default function SimulationGazPage() {
 
             <button
               onClick={extraireFacture}
-              className="mt-3 w-full rounded-xl bg-slate-900 p-3 text-white"
+              className="mt-3 w-full rounded-xl bg-slate-900 p-3 font-semibold text-white"
             >
               Extraire les informations
             </button>
 
             {messageExtraction && (
-              <p className="mt-2 text-sm">{messageExtraction}</p>
+              <p className="mt-2 text-sm text-slate-600">{messageExtraction}</p>
             )}
           </div>
 
-          {/* OFFRE ACTUELLE */}
           <div className="space-y-3">
             <h2 className="text-lg font-semibold">Offre actuelle</h2>
 
-            <div>
-              <label className="text-sm">Consommation annuelle (kWh)</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Consommation annuelle (kWh)
+              </label>
               <input
                 type="number"
                 value={consommation}
@@ -192,8 +207,10 @@ export default function SimulationGazPage() {
               />
             </div>
 
-            <div>
-              <label className="text-sm">Prix actuel du kWh (€)</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Prix actuel du kWh (€)
+              </label>
               <input
                 type="number"
                 value={prixKwh}
@@ -203,88 +220,102 @@ export default function SimulationGazPage() {
             </div>
           </div>
 
-          {/* OFFRE UNIFEE */}
           <div className="space-y-3">
             <h2 className="text-lg font-semibold">Offre UNIFEE</h2>
 
             <div className="rounded-xl bg-slate-100 p-4">
               <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
-              <p className="text-lg font-semibold">{prixUnifee} €</p>
+              <p className="text-lg font-semibold text-slate-900">
+                {prixUnifee} €
+              </p>
             </div>
 
             <div className="rounded-xl bg-slate-100 p-4">
-              <p className="text-sm text-slate-500">
-                Abonnement UNIFEE annuel
+              <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
+              <p className="text-lg font-semibold text-slate-900">
+                {aboUnifee} €
               </p>
-              <p className="text-lg font-semibold">{aboUnifee} €</p>
             </div>
           </div>
 
-          {/* COUTS */}
           <div className="space-y-3">
             <h2 className="text-lg font-semibold">Coûts actuels</h2>
 
-            <input
-              type="number"
-              placeholder="Abonnement annuel (€)"
-              value={abonnement}
-              onChange={(e) => setAbonnement(e.target.value)}
-              className="w-full rounded-xl border p-3"
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Abonnement annuel actuel (€)
+              </label>
+              <input
+                type="number"
+                value={abonnement}
+                onChange={(e) => setAbonnement(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-            <input
-              type="number"
-              placeholder="Taxes annuelles (€)"
-              value={taxes}
-              onChange={(e) => setTaxes(e.target.value)}
-              className="w-full rounded-xl border p-3"
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Taxes annuelles (€)
+              </label>
+              <input
+                type="number"
+                value={taxes}
+                onChange={(e) => setTaxes(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
           </div>
 
           <button
             onClick={calculer}
-            className="w-full rounded-xl bg-slate-900 p-4 text-white"
+            className="w-full rounded-xl bg-slate-900 p-4 font-semibold text-white"
           >
             Calculer mes économies
           </button>
         </div>
 
-        {/* RESULTATS */}
         {economieAnnuelle !== null && (
-          <div className="rounded-2xl bg-green-50 p-6 space-y-4">
-
+          <div className="space-y-5 rounded-2xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-6 shadow-sm">
             <div className="text-center">
-              <p className="text-sm">Économie annuelle</p>
-              <p className="text-4xl font-bold text-green-600">
+              <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                Économie estimée
+              </p>
+              <p className="mt-2 text-5xl font-bold text-green-600">
                 {economieAnnuelle.toFixed(0)} €
+              </p>
+              <p className="mt-2 text-base text-slate-600">
+                soit {economieMensuelle?.toFixed(0)} € par mois
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900 p-5 text-white text-center">
+              <p className="text-sm uppercase tracking-wide text-slate-300">
+                Réduction estimée
+              </p>
+              <p className="mt-2 text-3xl font-bold">
+                {pourcentage?.toFixed(1)} %
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white p-4 rounded-xl text-center">
-                <p className="text-sm">Actuel</p>
-                <p>{coutActuel?.toFixed(0)} €</p>
+              <div className="rounded-xl bg-white p-4 text-center border">
+                <p className="text-sm text-slate-500">Coût actuel</p>
+                <p className="mt-1 text-xl font-semibold text-slate-900">
+                  {coutActuel?.toFixed(0)} €
+                </p>
               </div>
 
-              <div className="bg-white p-4 rounded-xl text-center">
-                <p className="text-sm">UNIFEE</p>
-                <p>{coutUnifee?.toFixed(0)} €</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl text-center">
-                <p className="text-sm">Mensuel</p>
-                <p>{economieMensuelle?.toFixed(0)} €</p>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl text-center">
-                <p className="text-sm">Réduction</p>
-                <p>{pourcentage?.toFixed(1)} %</p>
+              <div className="rounded-xl bg-white p-4 text-center border">
+                <p className="text-sm text-slate-500">Offre UNIFEE</p>
+                <p className="mt-1 text-xl font-semibold text-slate-900">
+                  {coutUnifee?.toFixed(0)} €
+                </p>
               </div>
             </div>
 
             <button
               onClick={enregistrerSimulation}
-              className="w-full rounded-xl bg-green-600 p-4 text-white"
+              className="w-full rounded-xl bg-green-600 p-4 font-semibold text-white transition hover:bg-green-700"
             >
               Enregistrer la simulation
             </button>
