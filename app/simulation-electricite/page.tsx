@@ -23,6 +23,22 @@ function parseFrenchNumber(value: string) {
   return Number.isNaN(parsed) ? "" : String(parsed);
 }
 
+function extraireValeur(text: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) return parseFrenchNumber(match[1]);
+  }
+  return "";
+}
+
+function nettoyerNom(value: string) {
+  return value
+    .replace(/\b(mme|mr|m\.|madame|monsieur)\b/gi, "")
+    .replace(/[0-9]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function detectSupplier(text: string) {
   const lower = text.toLowerCase();
 
@@ -61,11 +77,39 @@ function detectTypeContrat(text: string) {
   return "base";
 }
 
-function extraireValeur(text: string, patterns: RegExp[]) {
+function extraireNomClient(text: string) {
+  const patterns = [
+    /raison sociale[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'-]{3,60})/i,
+    /client[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'-]{3,60})/i,
+    /nom[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'-]{3,60})/i,
+  ];
+
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match?.[1]) return parseFrenchNumber(match[1]);
+    if (match?.[1]) {
+      const nom = nettoyerNom(match[1]);
+      if (nom.length >= 3) return nom;
+    }
   }
+
+  return "";
+}
+
+function extraireVille(text: string) {
+  const patterns = [
+    /adresse de consommation[^0-9]{0,20}[0-9]{0,5}\s*[A-Za-zÀ-ÿ0-9\s,'-]*\b([A-ZÀ-ÿ][A-Za-zÀ-ÿ' -]{2,40})\b/i,
+    /adresse[^0-9]{0,20}[0-9]{5}\s+([A-ZÀ-ÿ][A-Za-zÀ-ÿ' -]{2,40})/i,
+    /consommation[^0-9]{0,40}[0-9]{5}\s+([A-ZÀ-ÿ][A-Za-zÀ-ÿ' -]{2,40})/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) {
+      const ville = match[1].replace(/\s+/g, " ").trim();
+      if (ville.length >= 2) return ville;
+    }
+  }
+
   return "";
 }
 
@@ -160,6 +204,12 @@ export default function SimulationElectricitePage() {
       const supplier = detectSupplier(text);
       if (supplier) setFournisseur(supplier);
 
+      const nomDetecte = extraireNomClient(text);
+      if (nomDetecte && !nomClient) setNomClient(nomDetecte);
+
+      const villeDetectee = extraireVille(text);
+      if (villeDetectee && !ville) setVille(villeDetectee);
+
       const contrat = detectTypeContrat(text);
       setTypeContrat(contrat);
 
@@ -220,6 +270,8 @@ export default function SimulationElectricitePage() {
 
       if (
         !supplier &&
+        !nomDetecte &&
+        !villeDetectee &&
         !consoBase &&
         !prixBase &&
         !abonnementDetecte &&
@@ -544,160 +596,112 @@ export default function SimulationElectricitePage() {
           )}
 
           {typeContrat === "base" && (
-            <>
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Votre consommation actuelle
-                </h2>
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Votre consommation actuelle
+              </h2>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Consommation annuelle (kWh)
-                  </label>
-                  <input
-                    type="number"
-                    value={consommation}
-                    onChange={(e) => setConsommation(e.target.value)}
-                    className="w-full rounded-xl border p-3"
-                    placeholder="Consommation annuelle"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Prix actuel du kWh (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={prixKwh}
-                    onChange={(e) => setPrixKwh(e.target.value)}
-                    className="w-full rounded-xl border p-3"
-                    placeholder="Prix actuel du kWh"
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Consommation annuelle (kWh)
+                </label>
+                <input
+                  type="number"
+                  value={consommation}
+                  onChange={(e) => setConsommation(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Consommation annuelle"
+                />
               </div>
 
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Votre offre UNIFEE
-                </h2>
-
-                <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
-                  <p className="text-lg font-semibold text-slate-900">{prixUnifee} €</p>
-                </div>
-
-                <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                  <p className="text-lg font-semibold text-slate-900">{aboUnifee} €</p>
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Prix actuel du kWh (€)
+                </label>
+                <input
+                  type="number"
+                  value={prixKwh}
+                  onChange={(e) => setPrixKwh(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Prix actuel du kWh"
+                />
               </div>
-            </>
+            </div>
           )}
 
           {typeContrat === "hc-hp" && (
-            <>
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Votre consommation actuelle
-                </h2>
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Votre consommation actuelle
+              </h2>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Prix kWh heure pleine (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={prixHP}
-                    onChange={(e) => setPrixHP(e.target.value)}
-                    className="w-full rounded-xl border p-3"
-                    placeholder="Prix HP"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Consommation heure pleine (kWh)
-                  </label>
-                  <input
-                    type="number"
-                    value={consoHP}
-                    onChange={(e) => setConsoHP(e.target.value)}
-                    className="w-full rounded-xl border p-3"
-                    placeholder="Consommation HP"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Prix kWh heure creuse (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={prixHC}
-                    onChange={(e) => setPrixHC(e.target.value)}
-                    className="w-full rounded-xl border p-3"
-                    placeholder="Prix HC"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Consommation heure creuse (kWh)
-                  </label>
-                  <input
-                    type="number"
-                    value={consoHC}
-                    onChange={(e) => setConsoHC(e.target.value)}
-                    className="w-full rounded-xl border p-3"
-                    placeholder="Consommation HC"
-                  />
-                </div>
-
-                {prixMoyenActuel !== null && (
-                  <div className="rounded-xl bg-slate-100 p-4">
-                    <p className="text-sm text-slate-500">Prix moyen actuel</p>
-                    <p className="text-lg font-semibold text-slate-900">
-                      {prixMoyenActuel.toFixed(4)} €/kWh
-                    </p>
-                  </div>
-                )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Prix kWh heure pleine (€)
+                </label>
+                <input
+                  type="number"
+                  value={prixHP}
+                  onChange={(e) => setPrixHP(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Prix HP"
+                />
               </div>
 
-              <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Votre offre UNIFEE
-                </h2>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Consommation heure pleine (kWh)
+                </label>
+                <input
+                  type="number"
+                  value={consoHP}
+                  onChange={(e) => setConsoHP(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Consommation HP"
+                />
+              </div>
 
-                <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">Prix UNIFEE heure pleine</p>
-                  <p className="text-lg font-semibold text-slate-900">{prixUnifeeHP} €</p>
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Prix kWh heure creuse (€)
+                </label>
+                <input
+                  type="number"
+                  value={prixHC}
+                  onChange={(e) => setPrixHC(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Prix HC"
+                />
+              </div>
 
-                <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">Prix UNIFEE heure creuse</p>
-                  <p className="text-lg font-semibold text-slate-900">{prixUnifeeHC} €</p>
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Consommation heure creuse (kWh)
+                </label>
+                <input
+                  type="number"
+                  value={consoHC}
+                  onChange={(e) => setConsoHC(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Consommation HC"
+                />
+              </div>
 
+              {prixMoyenActuel !== null && (
                 <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
+                  <p className="text-sm text-slate-500">Prix moyen actuel</p>
                   <p className="text-lg font-semibold text-slate-900">
-                    {aboUnifeeHcHp} €
+                    {prixMoyenActuel.toFixed(4)} €/kWh
                   </p>
                 </div>
-              </div>
-            </>
+              )}
+            </div>
           )}
 
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">
               Autres coûts de la facture actuelle
             </h2>
-
-            <div className="rounded-xl bg-slate-100 p-4 text-sm text-slate-600">
-              💡 Les taxes et coûts réseau sont réglementés et identiques quel que soit
-              le fournisseur. Ils sont intégrés automatiquement dans le calcul.
-            </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
@@ -737,6 +741,54 @@ export default function SimulationElectricitePage() {
                 placeholder="Puissance max utilisée"
               />
             </div>
+          </div>
+
+          {typeContrat === "base" && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Votre offre UNIFEE
+              </h2>
+
+              <div className="rounded-xl bg-slate-100 p-4">
+                <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
+                <p className="text-lg font-semibold text-slate-900">{prixUnifee} €</p>
+              </div>
+
+              <div className="rounded-xl bg-slate-100 p-4">
+                <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
+                <p className="text-lg font-semibold text-slate-900">{aboUnifee} €</p>
+              </div>
+            </div>
+          )}
+
+          {typeContrat === "hc-hp" && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Votre offre UNIFEE
+              </h2>
+
+              <div className="rounded-xl bg-slate-100 p-4">
+                <p className="text-sm text-slate-500">Prix UNIFEE heure pleine</p>
+                <p className="text-lg font-semibold text-slate-900">{prixUnifeeHP} €</p>
+              </div>
+
+              <div className="rounded-xl bg-slate-100 p-4">
+                <p className="text-sm text-slate-500">Prix UNIFEE heure creuse</p>
+                <p className="text-lg font-semibold text-slate-900">{prixUnifeeHC} €</p>
+              </div>
+
+              <div className="rounded-xl bg-slate-100 p-4">
+                <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {aboUnifeeHcHp} €
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-xl bg-slate-100 p-4 text-sm text-slate-600">
+            💡 Les taxes et coûts réseau sont réglementés et identiques quel que soit
+            le fournisseur. Ils sont intégrés automatiquement dans le calcul.
           </div>
 
           <button
