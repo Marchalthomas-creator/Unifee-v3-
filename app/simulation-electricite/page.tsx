@@ -319,28 +319,20 @@ export default function SimulationElectricitePage() {
                   Offre UNIFEE
                 </h2>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Prix UNIFEE du kWh (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={prixUnifee}
-                    readOnly
-                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-                  />
+                <div className="rounded-xl bg-slate-100 p-4">
+                  <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {prixUnifee} €
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Abonnement UNIFEE annuel (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={aboUnifee}
-                    readOnly
-                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-                  />
+                <div className="rounded-xl bg-slate-100 p-4">
+                  <p className="text-sm text-slate-500">
+                    Abonnement UNIFEE annuel
+                  </p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {aboUnifee} €
+                  </p>
                 </div>
               </div>
             </>
@@ -420,40 +412,27 @@ export default function SimulationElectricitePage() {
                   Offre UNIFEE
                 </h2>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Prix UNIFEE heure pleine (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={prixUnifeeHP}
-                    readOnly
-                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-                  />
+                <div className="rounded-xl bg-slate-100 p-4">
+                  <p className="text-sm text-slate-500">Prix UNIFEE heure pleine</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {prixUnifeeHP} €
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Prix UNIFEE heure creuse (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={prixUnifeeHC}
-                    readOnly
-                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-                  />
+                <div className="rounded-xl bg-slate-100 p-4">
+                  <p className="text-sm text-slate-500">Prix UNIFEE heure creuse</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {prixUnifeeHC} €
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Abonnement UNIFEE annuel (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={aboUnifeeHcHp}
-                    readOnly
-                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-                  />
+                <div className="rounded-xl bg-slate-100 p-4">
+                  <p className="text-sm text-slate-500">
+                    Abonnement UNIFEE annuel
+                  </p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {aboUnifeeHcHp} €
+                  </p>
                 </div>
               </div>
             </>
@@ -513,44 +492,50 @@ export default function SimulationElectricitePage() {
         </div>
 
         {economieAnnuelle !== null && (
-          <div className="space-y-4 rounded-2xl border border-green-200 bg-green-50 p-6">
+          <div className="space-y-5 rounded-2xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-6 shadow-sm">
             <div className="text-center">
-              <p className="text-sm font-medium uppercase tracking-wide text-slate-600">
-                Économie annuelle
+              <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                Économie estimée
               </p>
-              <p className="mt-2 text-4xl font-bold text-green-600">
+              <p className="mt-2 text-5xl font-bold text-green-600">
                 {economieAnnuelle.toFixed(0)} €
+              </p>
+              <p className="mt-2 text-base text-slate-600">
+                soit {economieMensuelle?.toFixed(0)} € par mois
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-900 p-5 text-center text-white">
+              <p className="text-sm uppercase tracking-wide text-slate-300">
+                Réduction estimée
+              </p>
+              <p className="mt-2 text-3xl font-bold">
+                {pourcentage?.toFixed(1)} %
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-white p-4 text-center">
+              <div className="rounded-xl border bg-white p-4 text-center">
                 <p className="text-sm text-slate-500">Coût actuel</p>
-                <p className="mt-1 text-xl font-semibold text-slate-900">
+                <p className="mt-1 text-xl font-semibold text-red-600">
                   {coutActuel?.toFixed(0)} €
                 </p>
               </div>
 
-              <div className="rounded-xl bg-white p-4 text-center">
+              <div className="rounded-xl border bg-white p-4 text-center">
                 <p className="text-sm text-slate-500">Offre UNIFEE</p>
-                <p className="mt-1 text-xl font-semibold text-slate-900">
+                <p className="mt-1 text-xl font-semibold text-green-600">
                   {coutUnifee?.toFixed(0)} €
                 </p>
               </div>
+            </div>
 
-              <div className="rounded-xl bg-white p-4 text-center">
-                <p className="text-sm text-slate-500">Économie mensuelle</p>
-                <p className="mt-1 text-xl font-semibold text-slate-900">
-                  {economieMensuelle?.toFixed(0)} €
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-white p-4 text-center">
-                <p className="text-sm text-slate-500">Réduction</p>
-                <p className="mt-1 text-xl font-semibold text-slate-900">
-                  {pourcentage?.toFixed(1)} %
-                </p>
-              </div>
+            <div className="rounded-xl bg-green-100 p-4 text-center">
+              <p className="text-sm text-green-800">
+                💡 En passant chez UNIFEE, vous économisez environ{" "}
+                <span className="font-bold">{economieAnnuelle.toFixed(0)} €</span>{" "}
+                par an sur votre électricité.
+              </p>
             </div>
 
             <button
