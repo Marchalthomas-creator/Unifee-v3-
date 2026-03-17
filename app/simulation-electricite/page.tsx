@@ -91,8 +91,6 @@ export default function SimulationElectricitePage() {
   const [consoHC, setConsoHC] = useState("");
 
   const [abonnement, setAbonnement] = useState("");
-  const [turpe, setTurpe] = useState("");
-  const [taxes, setTaxes] = useState("");
   const [puissanceSouscrite, setPuissanceSouscrite] = useState("");
   const [puissanceMax, setPuissanceMax] = useState("");
 
@@ -182,18 +180,6 @@ export default function SimulationElectricitePage() {
         /abonnement[^0-9]{0,25}([0-9]+[.,][0-9]+)\s*€/i,
       ]);
 
-      const turpeDetecte = extraireValeur(text, [
-        /dont acheminement[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
-        /acheminement[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
-        /turpe[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
-      ]);
-
-      const taxesDetectees = extraireValeur(text, [
-        /total taxes et contributions[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
-        /total taxes[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
-        /taxes et contributions[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
-      ]);
-
       const puissanceDetectee = extraireValeur(text, [
         /puissance souscrite[^0-9]{0,25}([0-9]+[.,]?[0-9]*)\s*kva/i,
         /([0-9]+[.,]?[0-9]*)\s*kva[^a-z]/i,
@@ -224,8 +210,6 @@ export default function SimulationElectricitePage() {
       }
 
       if (abonnementDetecte) setAbonnement(abonnementDetecte);
-      if (turpeDetecte) setTurpe(turpeDetecte);
-      if (taxesDetectees) setTaxes(taxesDetectees);
       if (puissanceDetectee) setPuissanceSouscrite(puissanceDetectee);
       if (puissanceMaxDetectee) setPuissanceMax(puissanceMaxDetectee);
 
@@ -239,8 +223,6 @@ export default function SimulationElectricitePage() {
         !consoBase &&
         !prixBase &&
         !abonnementDetecte &&
-        !turpeDetecte &&
-        !taxesDetectees &&
         !hpPriceMatch &&
         !hcPriceMatch
       ) {
@@ -264,14 +246,9 @@ export default function SimulationElectricitePage() {
 
   function calculer() {
     const abo = parseFloat(abonnement) || 0;
-    const turpeVal = parseFloat(turpe) || 0;
-    const taxesVal = parseFloat(taxes) || 0;
 
-    let totalActuel = 0;
-    let totalUnifee = 0;
-    let economie = 0;
-    let mensuel = 0;
-    let reduction = 0;
+    let totalActuelHT = 0;
+    let totalUnifeeHT = 0;
 
     if (typeContrat === "base") {
       const conso = parseFloat(consommation) || 0;
@@ -280,8 +257,8 @@ export default function SimulationElectricitePage() {
       const prixU = parseFloat(prixUnifee) || 0;
       const aboU = parseFloat(aboUnifee) || 0;
 
-      totalActuel = conso * prix + abo + turpeVal + taxesVal;
-      totalUnifee = conso * prixU + aboU + turpeVal + taxesVal;
+      totalActuelHT = conso * prix + abo;
+      totalUnifeeHT = conso * prixU + aboU;
       setPrixMoyenActuel(prix);
     } else {
       const hp = parseFloat(consoHP) || 0;
@@ -300,13 +277,17 @@ export default function SimulationElectricitePage() {
       const prixMoyen = totalEnergieActuelle / (totalConso || 1);
       setPrixMoyenActuel(prixMoyen);
 
-      totalActuel = totalEnergieActuelle + abo + turpeVal + taxesVal;
-      totalUnifee = totalEnergieUnifee + aboU + turpeVal + taxesVal;
+      totalActuelHT = totalEnergieActuelle + abo;
+      totalUnifeeHT = totalEnergieUnifee + aboU;
     }
 
-    economie = totalActuel - totalUnifee;
-    mensuel = economie / 12;
-    reduction = totalActuel > 0 ? (economie / totalActuel) * 100 : 0;
+    const coefficientReglemente = 1.12;
+    const totalActuel = totalActuelHT * coefficientReglemente;
+    const totalUnifee = totalUnifeeHT * coefficientReglemente;
+
+    const economie = totalActuel - totalUnifee;
+    const mensuel = economie / 12;
+    const reduction = totalActuel > 0 ? (economie / totalActuel) * 100 : 0;
 
     setCoutActuel(totalActuel);
     setCoutUnifee(totalUnifee);
@@ -347,17 +328,15 @@ export default function SimulationElectricitePage() {
     doc.text("Résultat de la simulation", 20, 75);
 
     doc.setFontSize(12);
-    doc.text(`Coût actuel annuel : ${coutActuel.toFixed(0)} €`, 20, 88);
-    doc.text(`Coût annuel avec UNIFEE : ${coutUnifee.toFixed(0)} €`, 20, 96);
-    doc.text(`Économie annuelle : ${economieAnnuelle.toFixed(0)} €`, 20, 108);
-    doc.text(`Économie mensuelle : ${economieMensuelle?.toFixed(0)} €`, 20, 116);
+    doc.text(`Coût actuel annuel estimé : ${coutActuel.toFixed(0)} €`, 20, 88);
+    doc.text(`Coût annuel estimé avec UNIFEE : ${coutUnifee.toFixed(0)} €`, 20, 96);
+    doc.text(`Économie annuelle estimée : ${economieAnnuelle.toFixed(0)} €`, 20, 108);
+    doc.text(`Économie mensuelle estimée : ${economieMensuelle?.toFixed(0)} €`, 20, 116);
     doc.text(`Réduction estimée : ${pourcentage?.toFixed(1)} %`, 20, 124);
 
     doc.setTextColor(0, 128, 0);
     doc.text(
-      `En passant chez UNIFEE, vous économisez environ ${economieAnnuelle.toFixed(
-        0
-      )} € par an.`,
+      `Les taxes et coûts réseau réglementés sont intégrés automatiquement dans le calcul.`,
       20,
       140
     );
@@ -394,8 +373,6 @@ export default function SimulationElectricitePage() {
       prixHC,
       consoHC,
       abonnement,
-      turpe,
-      taxes,
       puissanceSouscrite,
       puissanceMax,
       prixUnifee,
@@ -717,6 +694,11 @@ export default function SimulationElectricitePage() {
               Autres coûts de la facture actuelle
             </h2>
 
+            <div className="rounded-xl bg-slate-100 p-4 text-sm text-slate-600">
+              💡 Les taxes et coûts réseau sont réglementés et identiques quel que soit
+              le fournisseur. Ils sont intégrés automatiquement dans le calcul.
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
                 Abonnement actuel annuel (€)
@@ -727,32 +709,6 @@ export default function SimulationElectricitePage() {
                 onChange={(e) => setAbonnement(e.target.value)}
                 className="w-full rounded-xl border p-3"
                 placeholder="Abonnement actuel"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                TURPE actuel annuel (€)
-              </label>
-              <input
-                type="number"
-                value={turpe}
-                onChange={(e) => setTurpe(e.target.value)}
-                className="w-full rounded-xl border p-3"
-                placeholder="TURPE actuel"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Taxes actuelles annuelles (€)
-              </label>
-              <input
-                type="number"
-                value={taxes}
-                onChange={(e) => setTaxes(e.target.value)}
-                className="w-full rounded-xl border p-3"
-                placeholder="Taxes actuelles"
               />
             </div>
 
