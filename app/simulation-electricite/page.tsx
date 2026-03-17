@@ -156,7 +156,6 @@ export default function SimulationElectricitePage() {
 
       const rawText = result.data.text || "";
       const text = normaliserTexte(rawText);
-      const lower = text.toLowerCase();
 
       setOcrText(text);
 
@@ -253,9 +252,6 @@ export default function SimulationElectricitePage() {
           "Analyse terminée. Les champs détectés ont été préremplis. Vérifie et corrige si nécessaire."
         );
       }
-
-      console.log("OCR TEXT:", text);
-      console.log("OCR LOWER:", lower);
     } catch (error) {
       console.error(error);
       setMessageExtraction(
@@ -574,7 +570,7 @@ export default function SimulationElectricitePage() {
             <>
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Offre actuelle
+                  Votre consommation actuelle
                 </h2>
 
                 <div className="space-y-2">
@@ -606,7 +602,7 @@ export default function SimulationElectricitePage() {
 
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Offre UNIFEE
+                  Votre offre UNIFEE
                 </h2>
 
                 <div className="rounded-xl bg-slate-100 p-4">
@@ -626,7 +622,7 @@ export default function SimulationElectricitePage() {
             <>
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Offre actuelle
+                  Votre consommation actuelle
                 </h2>
 
                 <div className="space-y-2">
@@ -693,7 +689,7 @@ export default function SimulationElectricitePage() {
 
               <div className="space-y-3">
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Offre UNIFEE
+                  Votre offre UNIFEE
                 </h2>
 
                 <div className="rounded-xl bg-slate-100 p-4">
@@ -718,7 +714,7 @@ export default function SimulationElectricitePage() {
 
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">
-              Coûts complémentaires actuels
+              Autres coûts de la facture actuelle
             </h2>
 
             <div className="space-y-2">
