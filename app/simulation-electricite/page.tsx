@@ -73,15 +73,15 @@ function detectTypeContrat(text: string) {
     lower.includes(" hp ") ||
     lower.includes("hp/");
 
-  if (hasHC || hasHP) return "hc-hp";
-  return "base";
+  if (hasHC || hasHP) return "hp-hc";
+  return "standard";
 }
 
 function extraireNomClient(text: string) {
   const patterns = [
-    /raison sociale[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,60})/i,
-    /client[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,60})/i,
-    /nom[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,60})/i,
+    /raison sociale[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,80})/i,
+    /client[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,80})/i,
+    /nom[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,80})/i,
   ];
 
   for (const pattern of patterns) {
@@ -113,6 +113,23 @@ function extraireVille(text: string) {
   return "";
 }
 
+function extraireDateFin(text: string) {
+  const patterns = [
+    /fin d[’']engagement[^0-9]{0,20}([0-9]{2}\/[0-9]{2}\/[0-9]{4})/i,
+    /date de fin[^0-9]{0,20}([0-9]{2}\/[0-9]{2}\/[0-9]{4})/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) {
+      const [jour, mois, annee] = match[1].split("/");
+      return `${annee}-${mois}-${jour}`;
+    }
+  }
+
+  return "";
+}
+
 export default function SimulationElectricitePage() {
   const router = useRouter();
 
@@ -124,7 +141,7 @@ export default function SimulationElectricitePage() {
   const [fournisseur, setFournisseur] = useState("");
   const [dateFin, setDateFin] = useState("");
 
-  const [typeContrat, setTypeContrat] = useState("base");
+  const [typeContrat, setTypeContrat] = useState("standard");
 
   const [consommation, setConsommation] = useState("");
   const [prixKwh, setPrixKwh] = useState("");
@@ -133,6 +150,10 @@ export default function SimulationElectricitePage() {
   const [consoHP, setConsoHP] = useState("");
   const [prixHC, setPrixHC] = useState("");
   const [consoHC, setConsoHC] = useState("");
+
+  const [libelleAutreContrat, setLibelleAutreContrat] = useState("");
+  const [prixMoyenAutre, setPrixMoyenAutre] = useState("");
+  const [detailsAutreContrat, setDetailsAutreContrat] = useState("");
 
   const [abonnement, setAbonnement] = useState("");
   const [puissanceSouscrite, setPuissanceSouscrite] = useState("");
@@ -205,10 +226,13 @@ export default function SimulationElectricitePage() {
       if (supplier) setFournisseur(supplier);
 
       const nomDetecte = extraireNomClient(text);
-      if (nomDetecte && !nomClient) setNomClient(nomDetecte);
+      if (nomDetecte) setNomClient(nomDetecte);
 
       const villeDetectee = extraireVille(text);
-      if (villeDetectee && !ville) setVille(villeDetectee);
+      if (villeDetectee) setVille(villeDetectee);
+
+      const dateFinDetectee = extraireDateFin(text);
+      if (dateFinDetectee) setDateFin(dateFinDetectee);
 
       const contrat = detectTypeContrat(text);
       setTypeContrat(contrat);
@@ -254,9 +278,14 @@ export default function SimulationElectricitePage() {
         /(?:heures?\s*creuses?|hc)[^0-9]{0,50}([0-9\s]+[.,]?[0-9]*)\s*kwh/i
       );
 
-      if (contrat === "base") {
+      if (contrat === "standard") {
         if (consoBase) setConsommation(consoBase);
         if (prixBase) setPrixKwh(prixBase);
+      }
+
+      if (contrat === "autres") {
+        if (consoBase) setConsommation(consoBase);
+        if (prixBase) setPrixMoyenAutre(prixBase);
       }
 
       if (abonnementDetecte) setAbonnement(abonnementDetecte);
@@ -267,6 +296,10 @@ export default function SimulationElectricitePage() {
       if (hcPriceMatch?.[1]) setPrixHC(parseFrenchNumber(hcPriceMatch[1]));
       if (hpConsoMatch?.[1]) setConsoHP(parseFrenchNumber(hpConsoMatch[1]));
       if (hcConsoMatch?.[1]) setConsoHC(parseFrenchNumber(hcConsoMatch[1]));
+
+      if (contrat === "autres" && !libelleAutreContrat) {
+        setLibelleAutreContrat("Autre contrat détecté");
+      }
 
       if (
         !supplier &&
@@ -302,7 +335,7 @@ export default function SimulationElectricitePage() {
     let totalActuelHT = 0;
     let totalUnifeeHT = 0;
 
-    if (typeContrat === "base") {
+    if (typeContrat === "standard") {
       const conso = parseFloat(consommation) || 0;
       const prix = parseFloat(prixKwh) || 0;
 
@@ -312,7 +345,7 @@ export default function SimulationElectricitePage() {
       totalActuelHT = conso * prix + abo;
       totalUnifeeHT = conso * prixU + aboU;
       setPrixMoyenActuel(prix);
-    } else {
+    } else if (typeContrat === "hp-hc") {
       const hp = parseFloat(consoHP) || 0;
       const hc = parseFloat(consoHC) || 0;
       const prixHpVal = parseFloat(prixHP) || 0;
@@ -331,6 +364,16 @@ export default function SimulationElectricitePage() {
 
       totalActuelHT = totalEnergieActuelle + abo;
       totalUnifeeHT = totalEnergieUnifee + aboU;
+    } else {
+      const conso = parseFloat(consommation) || 0;
+      const prix = parseFloat(prixMoyenAutre) || 0;
+
+      const prixU = parseFloat(prixUnifee) || 0;
+      const aboU = parseFloat(aboUnifee) || 0;
+
+      totalActuelHT = conso * prix + abo;
+      totalUnifeeHT = conso * prixU + aboU;
+      setPrixMoyenActuel(prix);
     }
 
     const coefficientReglemente = 1.12;
@@ -366,15 +409,7 @@ export default function SimulationElectricitePage() {
     doc.text(`Client : ${nomClient || "-"}`, 20, 35);
     doc.text(`Ville : ${ville || "-"}`, 20, 43);
     doc.text(`Fournisseur : ${fournisseur || "-"}`, 20, 51);
-    doc.text(
-      `Type de contrat : ${
-        typeContrat === "base"
-          ? "Option Base"
-          : "Heures Pleines / Heures Creuses"
-      }`,
-      20,
-      59
-    );
+    doc.text(`Type de contrat : ${typeContrat}`, 20, 59);
 
     doc.setFontSize(14);
     doc.text("Résultat de la simulation", 20, 75);
@@ -424,6 +459,9 @@ export default function SimulationElectricitePage() {
       consoHP,
       prixHC,
       consoHC,
+      prixMoyenAutre,
+      libelleAutreContrat,
+      detailsAutreContrat,
       abonnement,
       puissanceSouscrite,
       puissanceMax,
@@ -455,71 +493,21 @@ export default function SimulationElectricitePage() {
         <div className="space-y-5 rounded-2xl border bg-white p-6 shadow-sm">
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">
-              Informations client
+              Type de contrat
             </h2>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
-                Nom du client
-              </label>
-              <input
-                type="text"
-                value={nomClient}
-                onChange={(e) => setNomClient(e.target.value)}
-                className="w-full rounded-xl border p-3"
-                placeholder="Nom du client"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Ville
-              </label>
-              <input
-                type="text"
-                value={ville}
-                onChange={(e) => setVille(e.target.value)}
-                className="w-full rounded-xl border p-3"
-                placeholder="Ville"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Fournisseur actuel
-              </label>
-              <input
-                type="text"
-                value={fournisseur}
-                onChange={(e) => setFournisseur(e.target.value)}
-                className="w-full rounded-xl border p-3"
-                placeholder="Nom du fournisseur"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Date de fin d’engagement
-              </label>
-              <input
-                type="date"
-                value={dateFin}
-                onChange={(e) => setDateFin(e.target.value)}
-                className="w-full rounded-xl border p-3"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Type de contrat
+                Choisissez votre contrat
               </label>
               <select
                 value={typeContrat}
                 onChange={(e) => setTypeContrat(e.target.value)}
                 className="w-full rounded-xl border p-3"
               >
-                <option value="base">Option Base</option>
-                <option value="hc-hp">Heures Pleines / Heures Creuses</option>
+                <option value="standard">Standard</option>
+                <option value="hp-hc">Heures pleines / Heures creuses</option>
+                <option value="autres">Autres</option>
               </select>
             </div>
           </div>
@@ -595,7 +583,64 @@ export default function SimulationElectricitePage() {
             </details>
           )}
 
-          {typeContrat === "base" && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Informations client
+            </h2>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Nom du client
+              </label>
+              <input
+                type="text"
+                value={nomClient}
+                onChange={(e) => setNomClient(e.target.value)}
+                className="w-full rounded-xl border p-3"
+                placeholder="Nom du client"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Ville
+              </label>
+              <input
+                type="text"
+                value={ville}
+                onChange={(e) => setVille(e.target.value)}
+                className="w-full rounded-xl border p-3"
+                placeholder="Ville"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Fournisseur actuel
+              </label>
+              <input
+                type="text"
+                value={fournisseur}
+                onChange={(e) => setFournisseur(e.target.value)}
+                className="w-full rounded-xl border p-3"
+                placeholder="Nom du fournisseur"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Date de fin d’engagement
+              </label>
+              <input
+                type="date"
+                value={dateFin}
+                onChange={(e) => setDateFin(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
+          </div>
+
+          {typeContrat === "standard" && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-900">
                 Votre consommation actuelle
@@ -629,7 +674,7 @@ export default function SimulationElectricitePage() {
             </div>
           )}
 
-          {typeContrat === "hc-hp" && (
+          {typeContrat === "hp-hc" && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-900">
                 Votre consommation actuelle
@@ -698,6 +743,66 @@ export default function SimulationElectricitePage() {
             </div>
           )}
 
+          {typeContrat === "autres" && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Votre consommation actuelle
+              </h2>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Nom du contrat / formule
+                </label>
+                <input
+                  type="text"
+                  value={libelleAutreContrat}
+                  onChange={(e) => setLibelleAutreContrat(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Exemple : offre pro spécifique"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Consommation annuelle (kWh)
+                </label>
+                <input
+                  type="number"
+                  value={consommation}
+                  onChange={(e) => setConsommation(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Consommation annuelle"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Prix moyen constaté du kWh (€)
+                </label>
+                <input
+                  type="number"
+                  value={prixMoyenAutre}
+                  onChange={(e) => setPrixMoyenAutre(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Prix moyen du kWh"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">
+                  Détails complémentaires
+                </label>
+                <textarea
+                  value={detailsAutreContrat}
+                  onChange={(e) => setDetailsAutreContrat(e.target.value)}
+                  className="w-full rounded-xl border p-3"
+                  placeholder="Notes libres sur le contrat"
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">
               Autres coûts de la facture actuelle
@@ -743,7 +848,7 @@ export default function SimulationElectricitePage() {
             </div>
           </div>
 
-          {typeContrat === "base" && (
+          {typeContrat === "standard" && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-900">
                 Votre offre UNIFEE
@@ -761,7 +866,7 @@ export default function SimulationElectricitePage() {
             </div>
           )}
 
-          {typeContrat === "hc-hp" && (
+          {typeContrat === "hp-hc" && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold text-slate-900">
                 Votre offre UNIFEE
@@ -779,7 +884,27 @@ export default function SimulationElectricitePage() {
 
               <div className="rounded-xl bg-slate-100 p-4">
                 <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                <p className="text-lg font-semibold text-slate-900">{aboUnifeeHcHp} €</p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {aboUnifeeHcHp} €
+                </p>
+              </div>
+            </div>
+          )}
+
+          {typeContrat === "autres" && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Votre offre UNIFEE
+              </h2>
+
+              <div className="rounded-xl bg-slate-100 p-4">
+                <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
+                <p className="text-lg font-semibold text-slate-900">{prixUnifee} €</p>
+              </div>
+
+              <div className="rounded-xl bg-slate-100 p-4">
+                <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
+                <p className="text-lg font-semibold text-slate-900">{aboUnifee} €</p>
               </div>
             </div>
           )}
