@@ -3,9 +3,34 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { jsPDF } from "jspdf";
+import Tesseract from "tesseract.js";
 
 function genererId() {
   return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+}
+
+function parseFrenchNumber(value: string) {
+  const cleaned = value.replace(/\s/g, "").replace(",", ".");
+  const parsed = parseFloat(cleaned);
+  return Number.isNaN(parsed) ? "" : String(parsed);
+}
+
+function extractFirst(text: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) return parseFrenchNumber(match[1]);
+  }
+  return "";
+}
+
+function detectSupplier(text: string) {
+  const lower = text.toLowerCase();
+  if (lower.includes("edf")) return "EDF";
+  if (lower.includes("engie")) return "Engie";
+  if (lower.includes("totalenergies")) return "TotalEnergies";
+  if (lower.includes("eni")) return "ENI";
+  if (lower.includes("ekwateur")) return "Ekwateur";
+  return "";
 }
 
 export default function SimulationElectricitePage() {
@@ -37,6 +62,8 @@ export default function SimulationElectricitePage() {
 
   const [facture, setFacture] = useState<File | null>(null);
   const [messageExtraction, setMessageExtraction] = useState("");
+  const [ocrText, setOcrText] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
 
   const [prixUnifee, setPrixUnifee] = useState("0.18");
   const [aboUnifee, setAboUnifee] = useState("120");
@@ -67,17 +94,102 @@ export default function SimulationElectricitePage() {
     if (!file) return;
     setFacture(file);
     setMessageExtraction("");
+    setOcrText("");
   }
 
-  function extraireFacture() {
+  async function extraireFacture() {
     if (!facture) {
       setMessageExtraction("Veuillez d’abord charger une photo ou une facture.");
       return;
     }
 
-    setMessageExtraction(
-      `Facture chargée : ${facture.name}. Le bouton est prêt pour la future extraction automatique OCR/IA.`
-    );
+    if (facture.type === "application/pdf") {
+      setMessageExtraction(
+        "La lecture automatique des PDF sera ajoutée à l’étape suivante. Pour l’instant, utilise une photo ou une capture de la facture."
+      );
+      return;
+    }
+
+    try {
+      setIsExtracting(true);
+      setMessageExtraction("Analyse de la facture en cours...");
+
+      const result = await Tesseract.recognize(facture, "fra+eng");
+      const text = result.data.text || "";
+      const lower = text.toLowerCase();
+
+      setOcrText(text);
+
+      const supplier = detectSupplier(text);
+      if (supplier) setFournisseur(supplier);
+
+      const detectedConso = extractFirst(text, [
+        /consommation[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
+        /conso[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
+      ]);
+
+      const detectedPrixBase = extractFirst(text, [
+        /prix[^0-9]{0,20}kwh[^0-9]{0,20}([0-9]+[.,][0-9]+)/i,
+        /([0-9]+[.,][0-9]+)\s*€?\s*\/?\s*kwh/i,
+      ]);
+
+      const detectedAbonnement = extractFirst(text, [
+        /abonnement[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      ]);
+
+      const detectedTaxes = extractFirst(text, [
+        /taxes?[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      ]);
+
+      const detectedTurpe = extractFirst(text, [
+        /turpe[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      ]);
+
+      const detectedPower = extractFirst(text, [
+        /puissance[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
+      ]);
+
+      const detectedPrixHP = extractFirst(text, [
+        /(heures?\s*pleines?|hp)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+      ]);
+
+      const detectedPrixHC = extractFirst(text, [
+        /(heures?\s*creuses?|hc)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+      ]);
+
+      const hpPriceMatch = text.match(/(?:heures?\s*pleines?|hp)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i);
+      const hcPriceMatch = text.match(/(?:heures?\s*creuses?|hc)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i);
+
+      const hpConsoMatch = text.match(/(?:heures?\s*pleines?|hp)[^0-9]{0,40}([0-9\s]+[.,]?[0-9]*)\s*kwh/i);
+      const hcConsoMatch = text.match(/(?:heures?\s*creuses?|hc)[^0-9]{0,40}([0-9\s]+[.,]?[0-9]*)\s*kwh/i);
+
+      if (hpPriceMatch?.[1] || hcPriceMatch?.[1] || hpConsoMatch?.[1] || hcConsoMatch?.[1]) {
+        setTypeContrat("hc-hp");
+      }
+
+      if (detectedConso) setConsommation(detectedConso);
+      if (detectedPrixBase) setPrixKwh(detectedPrixBase);
+      if (detectedAbonnement) setAbonnement(detectedAbonnement);
+      if (detectedTaxes) setTaxes(detectedTaxes);
+      if (detectedTurpe) setTurpe(detectedTurpe);
+      if (detectedPower) setPuissanceSouscrite(detectedPower);
+
+      if (hpPriceMatch?.[1]) setPrixHP(parseFrenchNumber(hpPriceMatch[1]));
+      if (hcPriceMatch?.[1]) setPrixHC(parseFrenchNumber(hcPriceMatch[1]));
+      if (hpConsoMatch?.[1]) setConsoHP(parseFrenchNumber(hpConsoMatch[1]));
+      if (hcConsoMatch?.[1]) setConsoHC(parseFrenchNumber(hcConsoMatch[1]));
+
+      if (lower.includes("heures pleines") || lower.includes("heures creuses") || lower.includes(" hp ") || lower.includes(" hc ")) {
+        setTypeContrat("hc-hp");
+      }
+
+      setMessageExtraction("Analyse terminée. Vérifie et corrige les champs si nécessaire.");
+    } catch (error) {
+      console.error(error);
+      setMessageExtraction("Impossible d’analyser la facture. Essaie avec une photo plus nette.");
+    } finally {
+      setIsExtracting(false);
+    }
   }
 
   function calculer() {
@@ -151,7 +263,15 @@ export default function SimulationElectricitePage() {
     doc.text(`Client : ${nomClient || "-"}`, 20, 35);
     doc.text(`Ville : ${ville || "-"}`, 20, 43);
     doc.text(`Fournisseur : ${fournisseur || "-"}`, 20, 51);
-    doc.text(`Type de contrat : ${typeContrat === "base" ? "Option Base" : "Heures Pleines / Heures Creuses"}`, 20, 59);
+    doc.text(
+      `Type de contrat : ${
+        typeContrat === "base"
+          ? "Option Base"
+          : "Heures Pleines / Heures Creuses"
+      }`,
+      20,
+      59
+    );
 
     doc.setFontSize(14);
     doc.text("Résultat de la simulation", 20, 75);
@@ -163,10 +283,11 @@ export default function SimulationElectricitePage() {
     doc.text(`Économie mensuelle : ${economieMensuelle?.toFixed(0)} €`, 20, 116);
     doc.text(`Réduction estimée : ${pourcentage?.toFixed(1)} %`, 20, 124);
 
-    doc.setFontSize(12);
     doc.setTextColor(0, 128, 0);
     doc.text(
-      `En passant chez UNIFEE, vous économisez environ ${economieAnnuelle.toFixed(0)} € par an.`,
+      `En passant chez UNIFEE, vous économisez environ ${economieAnnuelle.toFixed(
+        0
+      )} € par an.`,
       20,
       140
     );
@@ -239,7 +360,9 @@ export default function SimulationElectricitePage() {
             </h2>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Nom du client</label>
+              <label className="text-sm font-medium text-slate-700">
+                Nom du client
+              </label>
               <input
                 type="text"
                 value={nomClient}
@@ -250,7 +373,9 @@ export default function SimulationElectricitePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Ville</label>
+              <label className="text-sm font-medium text-slate-700">
+                Ville
+              </label>
               <input
                 type="text"
                 value={ville}
@@ -261,7 +386,9 @@ export default function SimulationElectricitePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Fournisseur actuel</label>
+              <label className="text-sm font-medium text-slate-700">
+                Fournisseur actuel
+              </label>
               <input
                 type="text"
                 value={fournisseur}
@@ -284,7 +411,9 @@ export default function SimulationElectricitePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Type de contrat</label>
+              <label className="text-sm font-medium text-slate-700">
+                Type de contrat
+              </label>
               <select
                 value={typeContrat}
                 onChange={(e) => setTypeContrat(e.target.value)}
@@ -345,9 +474,10 @@ export default function SimulationElectricitePage() {
             <button
               type="button"
               onClick={extraireFacture}
-              className="mt-4 w-full rounded-xl bg-blue-600 p-3 font-semibold text-white transition hover:bg-blue-700"
+              disabled={isExtracting}
+              className="mt-4 w-full rounded-xl bg-blue-600 p-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
             >
-              Extraire les informations
+              {isExtracting ? "Extraction en cours..." : "Extraire les informations"}
             </button>
 
             {messageExtraction && (
@@ -355,10 +485,23 @@ export default function SimulationElectricitePage() {
             )}
           </div>
 
+          {ocrText && (
+            <details className="rounded-xl border bg-slate-50 p-4">
+              <summary className="cursor-pointer text-sm font-medium text-slate-700">
+                Voir le texte détecté
+              </summary>
+              <pre className="mt-3 whitespace-pre-wrap text-xs text-slate-600">
+                {ocrText}
+              </pre>
+            </details>
+          )}
+
           {typeContrat === "base" && (
             <>
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">Offre actuelle</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre actuelle
+                </h2>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">
@@ -388,7 +531,9 @@ export default function SimulationElectricitePage() {
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">Offre UNIFEE</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre UNIFEE
+                </h2>
 
                 <div className="rounded-xl bg-slate-100 p-4">
                   <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
@@ -406,7 +551,9 @@ export default function SimulationElectricitePage() {
           {typeContrat === "hc-hp" && (
             <>
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">Offre actuelle</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre actuelle
+                </h2>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">
@@ -471,7 +618,9 @@ export default function SimulationElectricitePage() {
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">Offre UNIFEE</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre UNIFEE
+                </h2>
 
                 <div className="rounded-xl bg-slate-100 p-4">
                   <p className="text-sm text-slate-500">Prix UNIFEE heure pleine</p>
@@ -485,7 +634,9 @@ export default function SimulationElectricitePage() {
 
                 <div className="rounded-xl bg-slate-100 p-4">
                   <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                  <p className="text-lg font-semibold text-slate-900">{aboUnifeeHcHp} €</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {aboUnifeeHcHp} €
+                  </p>
                 </div>
               </div>
             </>
