@@ -79,9 +79,9 @@ function detectTypeContrat(text: string) {
 
 function extraireNomClient(text: string) {
   const patterns = [
-    /raison sociale[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'-]{3,60})/i,
-    /client[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'-]{3,60})/i,
-    /nom[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'-]{3,60})/i,
+    /raison sociale[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,60})/i,
+    /client[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,60})/i,
+    /nom[^a-z0-9]{0,10}([A-ZÀ-ÿ][A-ZÀ-ÿa-z\s'’-]{3,60})/i,
   ];
 
   for (const pattern of patterns) {
@@ -97,9 +97,9 @@ function extraireNomClient(text: string) {
 
 function extraireVille(text: string) {
   const patterns = [
-    /adresse de consommation[^0-9]{0,20}[0-9]{0,5}\s*[A-Za-zÀ-ÿ0-9\s,'-]*\b([A-ZÀ-ÿ][A-Za-zÀ-ÿ' -]{2,40})\b/i,
-    /adresse[^0-9]{0,20}[0-9]{5}\s+([A-ZÀ-ÿ][A-Za-zÀ-ÿ' -]{2,40})/i,
-    /consommation[^0-9]{0,40}[0-9]{5}\s+([A-ZÀ-ÿ][A-Za-zÀ-ÿ' -]{2,40})/i,
+    /adresse de consommation[^0-9]{0,20}[0-9]{0,5}\s*[A-Za-zÀ-ÿ0-9\s,'’-]*\b([A-ZÀ-ÿ][A-Za-zÀ-ÿ'’ -]{2,40})\b/i,
+    /adresse[^0-9]{0,20}[0-9]{5}\s+([A-ZÀ-ÿ][A-Za-zÀ-ÿ'’ -]{2,40})/i,
+    /consommation[^0-9]{0,40}[0-9]{5}\s+([A-ZÀ-ÿ][A-Za-zÀ-ÿ'’ -]{2,40})/i,
   ];
 
   for (const pattern of patterns) {
@@ -779,9 +779,7 @@ export default function SimulationElectricitePage() {
 
               <div className="rounded-xl bg-slate-100 p-4">
                 <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {aboUnifeeHcHp} €
-                </p>
+                <p className="text-lg font-semibold text-slate-900">{aboUnifeeHcHp} €</p>
               </div>
             </div>
           )}
