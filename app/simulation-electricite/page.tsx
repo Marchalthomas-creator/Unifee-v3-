@@ -23,14 +23,6 @@ function parseFrenchNumber(value: string) {
   return Number.isNaN(parsed) ? "" : String(parsed);
 }
 
-function findMatch(text: string, patterns: RegExp[]) {
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (match?.[1]) return parseFrenchNumber(match[1]);
-  }
-  return "";
-}
-
 function detectSupplier(text: string) {
   const lower = text.toLowerCase();
 
@@ -47,6 +39,7 @@ function detectSupplier(text: string) {
   if (lower.includes("mint energie") || lower.includes("mint énergie")) {
     return "Mint Énergie";
   }
+
   return "";
 }
 
@@ -66,6 +59,14 @@ function detectTypeContrat(text: string) {
 
   if (hasHC || hasHP) return "hc-hp";
   return "base";
+}
+
+function extraireValeur(text: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match?.[1]) return parseFrenchNumber(match[1]);
+  }
+  return "";
 }
 
 export default function SimulationElectricitePage() {
@@ -165,38 +166,43 @@ export default function SimulationElectricitePage() {
       const contrat = detectTypeContrat(text);
       setTypeContrat(contrat);
 
-      const detectedConsoBase = findMatch(text, [
+      const consoBase = extraireValeur(text, [
+        /total consommation[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
         /consommation annuelle[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
         /consommation[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
-        /total conso[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
+        /conso[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
       ]);
 
-      const detectedPrixBase = findMatch(text, [
+      const prixBase = extraireValeur(text, [
         /prix[^0-9]{0,15}kwh[^0-9]{0,20}([0-9]+[.,][0-9]+)/i,
         /([0-9]+[.,][0-9]+)\s*€?\s*\/\s*kwh/i,
       ]);
 
-      const detectedAbonnement = findMatch(text, [
-        /abonnement[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      const abonnementDetecte = extraireValeur(text, [
+        /total abonnement[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+        /abonnement[^0-9]{0,25}([0-9]+[.,][0-9]+)\s*€/i,
       ]);
 
-      const detectedTaxes = findMatch(text, [
-        /taxes?[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
-        /cta[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      const turpeDetecte = extraireValeur(text, [
+        /dont acheminement[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+        /acheminement[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+        /turpe[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
       ]);
 
-      const detectedTurpe = findMatch(text, [
-        /turpe[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      const taxesDetectees = extraireValeur(text, [
+        /total taxes et contributions[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+        /total taxes[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+        /taxes et contributions[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
       ]);
 
-      const detectedPower = findMatch(text, [
-        /puissance souscrite[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
-        /puissance[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
+      const puissanceDetectee = extraireValeur(text, [
+        /puissance souscrite[^0-9]{0,25}([0-9]+[.,]?[0-9]*)\s*kva/i,
+        /([0-9]+[.,]?[0-9]*)\s*kva[^a-z]/i,
       ]);
 
-      const detectedMaxPower = findMatch(text, [
-        /puissance max[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
-        /max utilisée[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
+      const puissanceMaxDetectee = extraireValeur(text, [
+        /puissance max[^0-9]{0,25}([0-9]+[.,]?[0-9]*)\s*kva/i,
+        /max utilisée[^0-9]{0,25}([0-9]+[.,]?[0-9]*)\s*kva/i,
       ]);
 
       const hpPriceMatch = text.match(
@@ -213,13 +219,16 @@ export default function SimulationElectricitePage() {
         /(?:heures?\s*creuses?|hc)[^0-9]{0,50}([0-9\s]+[.,]?[0-9]*)\s*kwh/i
       );
 
-      if (detectedConsoBase && contrat === "base") setConsommation(detectedConsoBase);
-      if (detectedPrixBase && contrat === "base") setPrixKwh(detectedPrixBase);
-      if (detectedAbonnement) setAbonnement(detectedAbonnement);
-      if (detectedTaxes) setTaxes(detectedTaxes);
-      if (detectedTurpe) setTurpe(detectedTurpe);
-      if (detectedPower) setPuissanceSouscrite(detectedPower);
-      if (detectedMaxPower) setPuissanceMax(detectedMaxPower);
+      if (contrat === "base") {
+        if (consoBase) setConsommation(consoBase);
+        if (prixBase) setPrixKwh(prixBase);
+      }
+
+      if (abonnementDetecte) setAbonnement(abonnementDetecte);
+      if (turpeDetecte) setTurpe(turpeDetecte);
+      if (taxesDetectees) setTaxes(taxesDetectees);
+      if (puissanceDetectee) setPuissanceSouscrite(puissanceDetectee);
+      if (puissanceMaxDetectee) setPuissanceMax(puissanceMaxDetectee);
 
       if (hpPriceMatch?.[1]) setPrixHP(parseFrenchNumber(hpPriceMatch[1]));
       if (hcPriceMatch?.[1]) setPrixHC(parseFrenchNumber(hcPriceMatch[1]));
@@ -228,14 +237,16 @@ export default function SimulationElectricitePage() {
 
       if (
         !supplier &&
-        !detectedConsoBase &&
-        !detectedPrixBase &&
-        !detectedAbonnement &&
+        !consoBase &&
+        !prixBase &&
+        !abonnementDetecte &&
+        !turpeDetecte &&
+        !taxesDetectees &&
         !hpPriceMatch &&
         !hcPriceMatch
       ) {
         setMessageExtraction(
-          "Analyse terminée, mais peu d’informations ont été trouvées. Essaie avec une photo plus nette, plus cadrée et bien éclairée."
+          "Analyse terminée, mais peu d’informations ont été trouvées. Essaie avec une photo plus nette, mieux cadrée et plus proche du tableau."
         );
       } else {
         setMessageExtraction(
@@ -243,9 +254,8 @@ export default function SimulationElectricitePage() {
         );
       }
 
-      if (lower.includes("engagement") && !dateFin) {
-        // réservé pour future extraction de date
-      }
+      console.log("OCR TEXT:", text);
+      console.log("OCR LOWER:", lower);
     } catch (error) {
       console.error(error);
       setMessageExtraction(
