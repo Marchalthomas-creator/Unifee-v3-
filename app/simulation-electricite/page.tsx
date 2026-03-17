@@ -173,50 +173,77 @@ export default function SimulationElectricitePage() {
           Simulation Électricité
         </h1>
 
-        <div className="space-y-4 rounded-2xl border bg-white p-6">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Informations client
-          </h2>
+        <div className="space-y-5 rounded-2xl border bg-white p-6">
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Informations client
+            </h2>
 
-          <input
-            type="text"
-            placeholder="Nom du client"
-            value={nomClient}
-            onChange={(e) => setNomClient(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Nom du client
+              </label>
+              <input
+                type="text"
+                placeholder="Nom du client"
+                value={nomClient}
+                onChange={(e) => setNomClient(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-          <input
-            type="text"
-            placeholder="Ville"
-            value={ville}
-            onChange={(e) => setVille(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Ville
+              </label>
+              <input
+                type="text"
+                placeholder="Ville"
+                value={ville}
+                onChange={(e) => setVille(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-          <input
-            type="text"
-            placeholder="Nom du fournisseur"
-            value={fournisseur}
-            onChange={(e) => setFournisseur(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Fournisseur actuel
+              </label>
+              <input
+                type="text"
+                placeholder="Nom du fournisseur"
+                value={fournisseur}
+                onChange={(e) => setFournisseur(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-          <input
-            type="date"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Date de fin d’engagement
+              </label>
+              <input
+                type="date"
+                value={dateFin}
+                onChange={(e) => setDateFin(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-          <select
-            value={typeContrat}
-            onChange={(e) => setTypeContrat(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          >
-            <option value="base">Option Base</option>
-            <option value="hc-hp">Heures Pleines / Heures Creuses</option>
-          </select>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Type de contrat
+              </label>
+              <select
+                value={typeContrat}
+                onChange={(e) => setTypeContrat(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              >
+                <option value="base">Option Base</option>
+                <option value="hc-hp">Heures Pleines / Heures Creuses</option>
+              </select>
+            </div>
+          </div>
 
           <div className="rounded-xl border bg-slate-50 p-4">
             <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -255,143 +282,227 @@ export default function SimulationElectricitePage() {
 
           {typeContrat === "base" && (
             <>
-              <h2 className="pt-2 text-lg font-semibold text-slate-900">
-                Offre actuelle
-              </h2>
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre actuelle
+                </h2>
 
-              <input
-                type="number"
-                placeholder="Consommation annuelle (kWh)"
-                value={consommation}
-                onChange={(e) => setConsommation(e.target.value)}
-                className="w-full rounded-xl border p-3"
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Consommation annuelle (kWh)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Consommation annuelle (kWh)"
+                    value={consommation}
+                    onChange={(e) => setConsommation(e.target.value)}
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
 
-              <input
-                type="number"
-                placeholder="Prix actuel du kWh (€)"
-                value={prixKwh}
-                onChange={(e) => setPrixKwh(e.target.value)}
-                className="w-full rounded-xl border p-3"
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Prix actuel du kWh (€)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Prix actuel du kWh (€)"
+                    value={prixKwh}
+                    onChange={(e) => setPrixKwh(e.target.value)}
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
+              </div>
 
-              <h2 className="pt-2 text-lg font-semibold text-slate-900">
-                Offre UNIFEE
-              </h2>
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre UNIFEE
+                </h2>
 
-              <input
-                type="number"
-                value={prixUnifee}
-                readOnly
-                className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Prix UNIFEE du kWh (€)
+                  </label>
+                  <input
+                    type="number"
+                    value={prixUnifee}
+                    readOnly
+                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
+                  />
+                </div>
 
-              <input
-                type="number"
-                value={aboUnifee}
-                readOnly
-                className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Abonnement UNIFEE annuel (€)
+                  </label>
+                  <input
+                    type="number"
+                    value={aboUnifee}
+                    readOnly
+                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
+                  />
+                </div>
+              </div>
             </>
           )}
 
           {typeContrat === "hc-hp" && (
             <>
-              <h2 className="pt-2 text-lg font-semibold text-slate-900">
-                Offre actuelle
-              </h2>
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre actuelle
+                </h2>
 
-              <input
-                type="number"
-                placeholder="Prix kWh heure pleine (€)"
-                value={prixHP}
-                onChange={(e) => setPrixHP(e.target.value)}
-                className="w-full rounded-xl border p-3"
-              />
-
-              <input
-                type="number"
-                placeholder="Consommation heure pleine (kWh)"
-                value={consoHP}
-                onChange={(e) => setConsoHP(e.target.value)}
-                className="w-full rounded-xl border p-3"
-              />
-
-              <input
-                type="number"
-                placeholder="Prix kWh heure creuse (€)"
-                value={prixHC}
-                onChange={(e) => setPrixHC(e.target.value)}
-                className="w-full rounded-xl border p-3"
-              />
-
-              <input
-                type="number"
-                placeholder="Consommation heure creuse (kWh)"
-                value={consoHC}
-                onChange={(e) => setConsoHC(e.target.value)}
-                className="w-full rounded-xl border p-3"
-              />
-
-              {prixMoyenActuel !== null && (
-                <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">Prix moyen actuel</p>
-                  <p className="font-semibold text-slate-900">
-                    {prixMoyenActuel.toFixed(4)} €/kWh
-                  </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Prix kWh heure pleine (€)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Prix kWh heure pleine (€)"
+                    value={prixHP}
+                    onChange={(e) => setPrixHP(e.target.value)}
+                    className="w-full rounded-xl border p-3"
+                  />
                 </div>
-              )}
 
-              <h2 className="pt-2 text-lg font-semibold text-slate-900">
-                Offre UNIFEE
-              </h2>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Consommation heure pleine (kWh)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Consommation heure pleine (kWh)"
+                    value={consoHP}
+                    onChange={(e) => setConsoHP(e.target.value)}
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
 
-              <input
-                type="number"
-                value={prixUnifeeHP}
-                readOnly
-                className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Prix kWh heure creuse (€)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Prix kWh heure creuse (€)"
+                    value={prixHC}
+                    onChange={(e) => setPrixHC(e.target.value)}
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
 
-              <input
-                type="number"
-                value={prixUnifeeHC}
-                readOnly
-                className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-              />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Consommation heure creuse (kWh)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Consommation heure creuse (kWh)"
+                    value={consoHC}
+                    onChange={(e) => setConsoHC(e.target.value)}
+                    className="w-full rounded-xl border p-3"
+                  />
+                </div>
 
-              <input
-                type="number"
-                value={aboUnifeeHcHp}
-                readOnly
-                className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
-              />
+                {prixMoyenActuel !== null && (
+                  <div className="rounded-xl bg-slate-100 p-4">
+                    <p className="text-sm text-slate-500">Prix moyen actuel</p>
+                    <p className="font-semibold text-slate-900">
+                      {prixMoyenActuel.toFixed(4)} €/kWh
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Offre UNIFEE
+                </h2>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Prix UNIFEE heure pleine (€)
+                  </label>
+                  <input
+                    type="number"
+                    value={prixUnifeeHP}
+                    readOnly
+                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Prix UNIFEE heure creuse (€)
+                  </label>
+                  <input
+                    type="number"
+                    value={prixUnifeeHC}
+                    readOnly
+                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Abonnement UNIFEE annuel (€)
+                  </label>
+                  <input
+                    type="number"
+                    value={aboUnifeeHcHp}
+                    readOnly
+                    className="w-full rounded-xl border bg-slate-100 p-3 text-slate-700"
+                  />
+                </div>
+              </div>
             </>
           )}
 
-          <input
-            type="number"
-            placeholder="Abonnement annuel (€)"
-            value={abonnement}
-            onChange={(e) => setAbonnement(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          />
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Coûts complémentaires actuels
+            </h2>
 
-          <input
-            type="number"
-            placeholder="TURPE annuel (€)"
-            value={turpe}
-            onChange={(e) => setTurpe(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Abonnement actuel annuel (€)
+              </label>
+              <input
+                type="number"
+                placeholder="Abonnement annuel (€)"
+                value={abonnement}
+                onChange={(e) => setAbonnement(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
 
-          <input
-            type="number"
-            placeholder="Taxes annuelles (€)"
-            value={taxes}
-            onChange={(e) => setTaxes(e.target.value)}
-            className="w-full rounded-xl border p-3"
-          />
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                TURPE actuel annuel (€)
+              </label>
+              <input
+                type="number"
+                placeholder="TURPE annuel (€)"
+                value={turpe}
+                onChange={(e) => setTurpe(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Taxes actuelles annuelles (€)
+              </label>
+              <input
+                type="number"
+                placeholder="Taxes annuelles (€)"
+                value={taxes}
+                onChange={(e) => setTaxes(e.target.value)}
+                className="w-full rounded-xl border p-3"
+              />
+            </div>
+          </div>
 
           <button
             onClick={calculer}
