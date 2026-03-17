@@ -9,13 +9,21 @@ function genererId() {
   return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 }
 
+function normaliserTexte(text: string) {
+  return text
+    .replace(/\u00a0/g, " ")
+    .replace(/[|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function parseFrenchNumber(value: string) {
   const cleaned = value.replace(/\s/g, "").replace(",", ".");
   const parsed = parseFloat(cleaned);
   return Number.isNaN(parsed) ? "" : String(parsed);
 }
 
-function extractFirst(text: string, patterns: RegExp[]) {
+function findMatch(text: string, patterns: RegExp[]) {
   for (const pattern of patterns) {
     const match = text.match(pattern);
     if (match?.[1]) return parseFrenchNumber(match[1]);
@@ -25,12 +33,39 @@ function extractFirst(text: string, patterns: RegExp[]) {
 
 function detectSupplier(text: string) {
   const lower = text.toLowerCase();
+
+  if (lower.includes("totalenergies") || lower.includes("total energies")) {
+    return "TotalEnergies";
+  }
   if (lower.includes("edf")) return "EDF";
   if (lower.includes("engie")) return "Engie";
-  if (lower.includes("totalenergies")) return "TotalEnergies";
-  if (lower.includes("eni")) return "ENI";
   if (lower.includes("ekwateur")) return "Ekwateur";
+  if (lower.includes("eni")) return "ENI";
+  if (lower.includes("ohm energie") || lower.includes("ohm énergie")) {
+    return "Ohm Énergie";
+  }
+  if (lower.includes("mint energie") || lower.includes("mint énergie")) {
+    return "Mint Énergie";
+  }
   return "";
+}
+
+function detectTypeContrat(text: string) {
+  const lower = text.toLowerCase();
+
+  const hasHC =
+    lower.includes("heure creuse") ||
+    lower.includes("heures creuses") ||
+    lower.includes(" hc ") ||
+    lower.includes("hc/");
+  const hasHP =
+    lower.includes("heure pleine") ||
+    lower.includes("heures pleines") ||
+    lower.includes(" hp ") ||
+    lower.includes("hp/");
+
+  if (hasHC || hasHP) return "hc-hp";
+  return "base";
 }
 
 export default function SimulationElectricitePage() {
@@ -114,8 +149,12 @@ export default function SimulationElectricitePage() {
       setIsExtracting(true);
       setMessageExtraction("Analyse de la facture en cours...");
 
-      const result = await Tesseract.recognize(facture, "fra+eng");
-      const text = result.data.text || "";
+      const result = await Tesseract.recognize(facture, "fra+eng", {
+        logger: () => {},
+      });
+
+      const rawText = result.data.text || "";
+      const text = normaliserTexte(rawText);
       const lower = text.toLowerCase();
 
       setOcrText(text);
@@ -123,70 +162,95 @@ export default function SimulationElectricitePage() {
       const supplier = detectSupplier(text);
       if (supplier) setFournisseur(supplier);
 
-      const detectedConso = extractFirst(text, [
-        /consommation[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
-        /conso[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
+      const contrat = detectTypeContrat(text);
+      setTypeContrat(contrat);
+
+      const detectedConsoBase = findMatch(text, [
+        /consommation annuelle[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
+        /consommation[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
+        /total conso[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
       ]);
 
-      const detectedPrixBase = extractFirst(text, [
-        /prix[^0-9]{0,20}kwh[^0-9]{0,20}([0-9]+[.,][0-9]+)/i,
-        /([0-9]+[.,][0-9]+)\s*€?\s*\/?\s*kwh/i,
+      const detectedPrixBase = findMatch(text, [
+        /prix[^0-9]{0,15}kwh[^0-9]{0,20}([0-9]+[.,][0-9]+)/i,
+        /([0-9]+[.,][0-9]+)\s*€?\s*\/\s*kwh/i,
       ]);
 
-      const detectedAbonnement = extractFirst(text, [
-        /abonnement[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      const detectedAbonnement = findMatch(text, [
+        /abonnement[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
       ]);
 
-      const detectedTaxes = extractFirst(text, [
-        /taxes?[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      const detectedTaxes = findMatch(text, [
+        /taxes?[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+        /cta[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
       ]);
 
-      const detectedTurpe = extractFirst(text, [
-        /turpe[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*€/i,
+      const detectedTurpe = findMatch(text, [
+        /turpe[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*€/i,
       ]);
 
-      const detectedPower = extractFirst(text, [
-        /puissance[^0-9]{0,20}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
+      const detectedPower = findMatch(text, [
+        /puissance souscrite[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
+        /puissance[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
       ]);
 
-      const detectedPrixHP = extractFirst(text, [
-        /(heures?\s*pleines?|hp)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
+      const detectedMaxPower = findMatch(text, [
+        /puissance max[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
+        /max utilisée[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kva/i,
       ]);
 
-      const detectedPrixHC = extractFirst(text, [
-        /(heures?\s*creuses?|hc)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i,
-      ]);
+      const hpPriceMatch = text.match(
+        /(?:heures?\s*pleines?|hp)[^0-9]{0,40}([0-9]+[.,][0-9]+)/i
+      );
+      const hcPriceMatch = text.match(
+        /(?:heures?\s*creuses?|hc)[^0-9]{0,40}([0-9]+[.,][0-9]+)/i
+      );
 
-      const hpPriceMatch = text.match(/(?:heures?\s*pleines?|hp)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i);
-      const hcPriceMatch = text.match(/(?:heures?\s*creuses?|hc)[^0-9]{0,30}([0-9]+[.,][0-9]+)/i);
+      const hpConsoMatch = text.match(
+        /(?:heures?\s*pleines?|hp)[^0-9]{0,50}([0-9\s]+[.,]?[0-9]*)\s*kwh/i
+      );
+      const hcConsoMatch = text.match(
+        /(?:heures?\s*creuses?|hc)[^0-9]{0,50}([0-9\s]+[.,]?[0-9]*)\s*kwh/i
+      );
 
-      const hpConsoMatch = text.match(/(?:heures?\s*pleines?|hp)[^0-9]{0,40}([0-9\s]+[.,]?[0-9]*)\s*kwh/i);
-      const hcConsoMatch = text.match(/(?:heures?\s*creuses?|hc)[^0-9]{0,40}([0-9\s]+[.,]?[0-9]*)\s*kwh/i);
-
-      if (hpPriceMatch?.[1] || hcPriceMatch?.[1] || hpConsoMatch?.[1] || hcConsoMatch?.[1]) {
-        setTypeContrat("hc-hp");
-      }
-
-      if (detectedConso) setConsommation(detectedConso);
-      if (detectedPrixBase) setPrixKwh(detectedPrixBase);
+      if (detectedConsoBase && contrat === "base") setConsommation(detectedConsoBase);
+      if (detectedPrixBase && contrat === "base") setPrixKwh(detectedPrixBase);
       if (detectedAbonnement) setAbonnement(detectedAbonnement);
       if (detectedTaxes) setTaxes(detectedTaxes);
       if (detectedTurpe) setTurpe(detectedTurpe);
       if (detectedPower) setPuissanceSouscrite(detectedPower);
+      if (detectedMaxPower) setPuissanceMax(detectedMaxPower);
 
       if (hpPriceMatch?.[1]) setPrixHP(parseFrenchNumber(hpPriceMatch[1]));
       if (hcPriceMatch?.[1]) setPrixHC(parseFrenchNumber(hcPriceMatch[1]));
       if (hpConsoMatch?.[1]) setConsoHP(parseFrenchNumber(hpConsoMatch[1]));
       if (hcConsoMatch?.[1]) setConsoHC(parseFrenchNumber(hcConsoMatch[1]));
 
-      if (lower.includes("heures pleines") || lower.includes("heures creuses") || lower.includes(" hp ") || lower.includes(" hc ")) {
-        setTypeContrat("hc-hp");
+      if (
+        !supplier &&
+        !detectedConsoBase &&
+        !detectedPrixBase &&
+        !detectedAbonnement &&
+        !hpPriceMatch &&
+        !hcPriceMatch
+      ) {
+        setMessageExtraction(
+          "Analyse terminée, mais peu d’informations ont été trouvées. Essaie avec une photo plus nette, plus cadrée et bien éclairée."
+        );
+      } else {
+        setMessageExtraction(
+          "Analyse terminée. Les champs détectés ont été préremplis. Vérifie et corrige si nécessaire."
+        );
       }
 
-      setMessageExtraction("Analyse terminée. Vérifie et corrige les champs si nécessaire.");
+      if (lower.includes("engagement") && !dateFin) {
+        // réservé pour future extraction de date
+      }
     } catch (error) {
       console.error(error);
-      setMessageExtraction("Impossible d’analyser la facture. Essaie avec une photo plus nette.");
+      setMessageExtraction(
+        "Impossible d’analyser la facture. Essaie avec une photo plus nette."
+      );
     } finally {
       setIsExtracting(false);
     }
