@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { jsPDF } from "jspdf";
 
 function genererId() {
   return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -9,6 +10,9 @@ function genererId() {
 
 export default function SimulationElectricitePage() {
   const router = useRouter();
+
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [nomClient, setNomClient] = useState("");
   const [ville, setVille] = useState("");
@@ -22,13 +26,14 @@ export default function SimulationElectricitePage() {
 
   const [prixHP, setPrixHP] = useState("");
   const [consoHP, setConsoHP] = useState("");
-
   const [prixHC, setPrixHC] = useState("");
   const [consoHC, setConsoHC] = useState("");
 
   const [abonnement, setAbonnement] = useState("");
   const [turpe, setTurpe] = useState("");
   const [taxes, setTaxes] = useState("");
+  const [puissanceSouscrite, setPuissanceSouscrite] = useState("");
+  const [puissanceMax, setPuissanceMax] = useState("");
 
   const [facture, setFacture] = useState<File | null>(null);
   const [messageExtraction, setMessageExtraction] = useState("");
@@ -58,14 +63,20 @@ export default function SimulationElectricitePage() {
     }
   }, []);
 
+  function gererSelectionFacture(file: File | null) {
+    if (!file) return;
+    setFacture(file);
+    setMessageExtraction("");
+  }
+
   function extraireFacture() {
     if (!facture) {
-      setMessageExtraction("Veuillez d’abord importer une facture.");
+      setMessageExtraction("Veuillez d’abord charger une photo ou une facture.");
       return;
     }
 
     setMessageExtraction(
-      `Facture prête à être analysée : ${facture.name}. La vraie extraction IA sera ajoutée à l’étape suivante.`
+      `Facture chargée : ${facture.name}. Le bouton est prêt pour la future extraction automatique OCR/IA.`
     );
   }
 
@@ -122,8 +133,54 @@ export default function SimulationElectricitePage() {
     setPourcentage(reduction);
   }
 
+  function genererPDF() {
+    if (
+      economieAnnuelle === null ||
+      coutActuel === null ||
+      coutUnifee === null
+    ) {
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.text("UNIFEE - Simulation Électricité", 20, 20);
+
+    doc.setFontSize(11);
+    doc.text(`Client : ${nomClient || "-"}`, 20, 35);
+    doc.text(`Ville : ${ville || "-"}`, 20, 43);
+    doc.text(`Fournisseur : ${fournisseur || "-"}`, 20, 51);
+    doc.text(`Type de contrat : ${typeContrat === "base" ? "Option Base" : "Heures Pleines / Heures Creuses"}`, 20, 59);
+
+    doc.setFontSize(14);
+    doc.text("Résultat de la simulation", 20, 75);
+
+    doc.setFontSize(12);
+    doc.text(`Coût actuel annuel : ${coutActuel.toFixed(0)} €`, 20, 88);
+    doc.text(`Coût annuel avec UNIFEE : ${coutUnifee.toFixed(0)} €`, 20, 96);
+    doc.text(`Économie annuelle : ${economieAnnuelle.toFixed(0)} €`, 20, 108);
+    doc.text(`Économie mensuelle : ${economieMensuelle?.toFixed(0)} €`, 20, 116);
+    doc.text(`Réduction estimée : ${pourcentage?.toFixed(1)} %`, 20, 124);
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 128, 0);
+    doc.text(
+      `En passant chez UNIFEE, vous économisez environ ${economieAnnuelle.toFixed(0)} € par an.`,
+      20,
+      140
+    );
+
+    doc.setTextColor(0, 0, 0);
+    doc.save(`simulation-electricite-${nomClient || "client"}.pdf`);
+  }
+
   function enregistrerSimulation() {
-    if (economieAnnuelle === null || coutActuel === null || coutUnifee === null) {
+    if (
+      economieAnnuelle === null ||
+      coutActuel === null ||
+      coutUnifee === null
+    ) {
       return;
     }
 
@@ -148,6 +205,8 @@ export default function SimulationElectricitePage() {
       abonnement,
       turpe,
       taxes,
+      puissanceSouscrite,
+      puissanceMax,
       prixUnifee,
       aboUnifee,
       prixUnifeeHP,
@@ -173,48 +232,42 @@ export default function SimulationElectricitePage() {
           Simulation Électricité
         </h1>
 
-        <div className="space-y-5 rounded-2xl border bg-white p-6">
+        <div className="space-y-5 rounded-2xl border bg-white p-6 shadow-sm">
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-900">
               Informations client
             </h2>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Nom du client
-              </label>
+              <label className="text-sm font-medium text-slate-700">Nom du client</label>
               <input
                 type="text"
-                placeholder="Nom du client"
                 value={nomClient}
                 onChange={(e) => setNomClient(e.target.value)}
                 className="w-full rounded-xl border p-3"
+                placeholder="Nom du client"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Ville
-              </label>
+              <label className="text-sm font-medium text-slate-700">Ville</label>
               <input
                 type="text"
-                placeholder="Ville"
                 value={ville}
                 onChange={(e) => setVille(e.target.value)}
                 className="w-full rounded-xl border p-3"
+                placeholder="Ville"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Fournisseur actuel
-              </label>
+              <label className="text-sm font-medium text-slate-700">Fournisseur actuel</label>
               <input
                 type="text"
-                placeholder="Nom du fournisseur"
                 value={fournisseur}
                 onChange={(e) => setFournisseur(e.target.value)}
                 className="w-full rounded-xl border p-3"
+                placeholder="Nom du fournisseur"
               />
             </div>
 
@@ -231,9 +284,7 @@ export default function SimulationElectricitePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Type de contrat
-              </label>
+              <label className="text-sm font-medium text-slate-700">Type de contrat</label>
               <select
                 value={typeContrat}
                 onChange={(e) => setTypeContrat(e.target.value)}
@@ -246,31 +297,55 @@ export default function SimulationElectricitePage() {
           </div>
 
           <div className="rounded-xl border bg-slate-50 p-4">
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Importer une facture
-            </label>
+            <p className="mb-3 text-sm font-medium text-slate-700">
+              Charger une facture
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="rounded-xl bg-slate-900 p-3 font-semibold text-white transition hover:bg-slate-800"
+              >
+                Prendre une photo
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-xl border border-slate-300 bg-white p-3 font-semibold text-slate-900 transition hover:bg-slate-50"
+              >
+                Importer une facture
+              </button>
+            </div>
 
             <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => gererSelectionFacture(e.target.files?.[0] || null)}
+            />
+
+            <input
+              ref={fileInputRef}
               type="file"
               accept="image/*,.pdf"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  setFacture(e.target.files[0]);
-                  setMessageExtraction("");
-                }
-              }}
-              className="w-full"
+              className="hidden"
+              onChange={(e) => gererSelectionFacture(e.target.files?.[0] || null)}
             />
 
             {facture && (
-              <p className="mt-2 text-sm text-green-600">
+              <p className="mt-3 text-sm text-green-600">
                 Fichier sélectionné : {facture.name}
               </p>
             )}
 
             <button
+              type="button"
               onClick={extraireFacture}
-              className="mt-4 w-full rounded-xl bg-slate-900 p-3 font-semibold text-white transition hover:bg-slate-800"
+              className="mt-4 w-full rounded-xl bg-blue-600 p-3 font-semibold text-white transition hover:bg-blue-700"
             >
               Extraire les informations
             </button>
@@ -283,9 +358,7 @@ export default function SimulationElectricitePage() {
           {typeContrat === "base" && (
             <>
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Offre actuelle
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">Offre actuelle</h2>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">
@@ -293,10 +366,10 @@ export default function SimulationElectricitePage() {
                   </label>
                   <input
                     type="number"
-                    placeholder="Consommation annuelle (kWh)"
                     value={consommation}
                     onChange={(e) => setConsommation(e.target.value)}
                     className="w-full rounded-xl border p-3"
+                    placeholder="Consommation annuelle"
                   />
                 </div>
 
@@ -306,33 +379,25 @@ export default function SimulationElectricitePage() {
                   </label>
                   <input
                     type="number"
-                    placeholder="Prix actuel du kWh (€)"
                     value={prixKwh}
                     onChange={(e) => setPrixKwh(e.target.value)}
                     className="w-full rounded-xl border p-3"
+                    placeholder="Prix actuel du kWh"
                   />
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Offre UNIFEE
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">Offre UNIFEE</h2>
 
                 <div className="rounded-xl bg-slate-100 p-4">
                   <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {prixUnifee} €
-                  </p>
+                  <p className="text-lg font-semibold text-slate-900">{prixUnifee} €</p>
                 </div>
 
                 <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">
-                    Abonnement UNIFEE annuel
-                  </p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {aboUnifee} €
-                  </p>
+                  <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
+                  <p className="text-lg font-semibold text-slate-900">{aboUnifee} €</p>
                 </div>
               </div>
             </>
@@ -341,9 +406,7 @@ export default function SimulationElectricitePage() {
           {typeContrat === "hc-hp" && (
             <>
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Offre actuelle
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">Offre actuelle</h2>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">
@@ -351,10 +414,10 @@ export default function SimulationElectricitePage() {
                   </label>
                   <input
                     type="number"
-                    placeholder="Prix kWh heure pleine (€)"
                     value={prixHP}
                     onChange={(e) => setPrixHP(e.target.value)}
                     className="w-full rounded-xl border p-3"
+                    placeholder="Prix HP"
                   />
                 </div>
 
@@ -364,10 +427,10 @@ export default function SimulationElectricitePage() {
                   </label>
                   <input
                     type="number"
-                    placeholder="Consommation heure pleine (kWh)"
                     value={consoHP}
                     onChange={(e) => setConsoHP(e.target.value)}
                     className="w-full rounded-xl border p-3"
+                    placeholder="Consommation HP"
                   />
                 </div>
 
@@ -377,10 +440,10 @@ export default function SimulationElectricitePage() {
                   </label>
                   <input
                     type="number"
-                    placeholder="Prix kWh heure creuse (€)"
                     value={prixHC}
                     onChange={(e) => setPrixHC(e.target.value)}
                     className="w-full rounded-xl border p-3"
+                    placeholder="Prix HC"
                   />
                 </div>
 
@@ -390,17 +453,17 @@ export default function SimulationElectricitePage() {
                   </label>
                   <input
                     type="number"
-                    placeholder="Consommation heure creuse (kWh)"
                     value={consoHC}
                     onChange={(e) => setConsoHC(e.target.value)}
                     className="w-full rounded-xl border p-3"
+                    placeholder="Consommation HC"
                   />
                 </div>
 
                 {prixMoyenActuel !== null && (
                   <div className="rounded-xl bg-slate-100 p-4">
                     <p className="text-sm text-slate-500">Prix moyen actuel</p>
-                    <p className="font-semibold text-slate-900">
+                    <p className="text-lg font-semibold text-slate-900">
                       {prixMoyenActuel.toFixed(4)} €/kWh
                     </p>
                   </div>
@@ -408,31 +471,21 @@ export default function SimulationElectricitePage() {
               </div>
 
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Offre UNIFEE
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-900">Offre UNIFEE</h2>
 
                 <div className="rounded-xl bg-slate-100 p-4">
                   <p className="text-sm text-slate-500">Prix UNIFEE heure pleine</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {prixUnifeeHP} €
-                  </p>
+                  <p className="text-lg font-semibold text-slate-900">{prixUnifeeHP} €</p>
                 </div>
 
                 <div className="rounded-xl bg-slate-100 p-4">
                   <p className="text-sm text-slate-500">Prix UNIFEE heure creuse</p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {prixUnifeeHC} €
-                  </p>
+                  <p className="text-lg font-semibold text-slate-900">{prixUnifeeHC} €</p>
                 </div>
 
                 <div className="rounded-xl bg-slate-100 p-4">
-                  <p className="text-sm text-slate-500">
-                    Abonnement UNIFEE annuel
-                  </p>
-                  <p className="text-lg font-semibold text-slate-900">
-                    {aboUnifeeHcHp} €
-                  </p>
+                  <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
+                  <p className="text-lg font-semibold text-slate-900">{aboUnifeeHcHp} €</p>
                 </div>
               </div>
             </>
@@ -449,10 +502,10 @@ export default function SimulationElectricitePage() {
               </label>
               <input
                 type="number"
-                placeholder="Abonnement annuel (€)"
                 value={abonnement}
                 onChange={(e) => setAbonnement(e.target.value)}
                 className="w-full rounded-xl border p-3"
+                placeholder="Abonnement actuel"
               />
             </div>
 
@@ -462,10 +515,10 @@ export default function SimulationElectricitePage() {
               </label>
               <input
                 type="number"
-                placeholder="TURPE annuel (€)"
                 value={turpe}
                 onChange={(e) => setTurpe(e.target.value)}
                 className="w-full rounded-xl border p-3"
+                placeholder="TURPE actuel"
               />
             </div>
 
@@ -475,15 +528,42 @@ export default function SimulationElectricitePage() {
               </label>
               <input
                 type="number"
-                placeholder="Taxes annuelles (€)"
                 value={taxes}
                 onChange={(e) => setTaxes(e.target.value)}
                 className="w-full rounded-xl border p-3"
+                placeholder="Taxes actuelles"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Puissance souscrite (kVA)
+              </label>
+              <input
+                type="number"
+                value={puissanceSouscrite}
+                onChange={(e) => setPuissanceSouscrite(e.target.value)}
+                className="w-full rounded-xl border p-3"
+                placeholder="Puissance souscrite"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                Puissance max utilisée (kVA)
+              </label>
+              <input
+                type="number"
+                value={puissanceMax}
+                onChange={(e) => setPuissanceMax(e.target.value)}
+                className="w-full rounded-xl border p-3"
+                placeholder="Puissance max utilisée"
               />
             </div>
           </div>
 
           <button
+            type="button"
             onClick={calculer}
             className="w-full rounded-xl bg-slate-900 p-4 font-semibold text-white transition hover:bg-slate-800"
           >
@@ -538,12 +618,23 @@ export default function SimulationElectricitePage() {
               </p>
             </div>
 
-            <button
-              onClick={enregistrerSimulation}
-              className="w-full rounded-xl bg-green-600 p-4 font-semibold text-white transition hover:bg-green-700"
-            >
-              Enregistrer la simulation
-            </button>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={genererPDF}
+                className="w-full rounded-xl bg-blue-600 p-4 font-semibold text-white transition hover:bg-blue-700"
+              >
+                Télécharger le PDF client
+              </button>
+
+              <button
+                type="button"
+                onClick={enregistrerSimulation}
+                className="w-full rounded-xl bg-green-600 p-4 font-semibold text-white transition hover:bg-green-700"
+              >
+                Enregistrer la simulation
+              </button>
+            </div>
           </div>
         )}
       </div>
