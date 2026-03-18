@@ -28,7 +28,7 @@ function parseFrenchNumber(value: string) {
 }
 
 function toNumber(value: string) {
-  const parsed = parseFloat(value.replace(",", "."));
+  const parsed = parseFloat(String(value).replace(",", "."));
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
@@ -527,50 +527,96 @@ export default function SimulationElectricitePage() {
 
   if (etape === "choix") {
     return (
-      <main className="min-h-screen bg-slate-50 px-5 py-10">
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafc_45%,_#f8fafc_100%)] px-5 py-10">
         <div className="mx-auto max-w-md space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-slate-900">
-              Simulation Électricité
-            </h1>
-            <p className="mt-2 text-sm text-slate-500">
-              Sélectionnez d’abord le type de contrat
-            </p>
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="rounded-xl border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white"
+            >
+              ← Retour
+            </button>
+            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
+              UNIFEE
+            </div>
           </div>
 
-          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <button
-              type="button"
-              onClick={() => choisirContrat("standard")}
-              className="w-full rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:bg-slate-50"
-            >
-              <div className="text-xl font-semibold text-slate-900">Standard</div>
-              <div className="mt-1 text-sm text-slate-500">Prix unique du kWh</div>
-            </button>
+          <div className="rounded-[28px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-600">
+                Électricité
+              </p>
+              <h1 className="mt-3 text-3xl font-bold leading-tight text-slate-900">
+                Choisissez le type de contrat
+              </h1>
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                Sélectionnez d’abord la bonne structure tarifaire pour afficher le
+                formulaire adapté.
+              </p>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => choisirContrat("hp-hc")}
-              className="w-full rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:bg-slate-50"
-            >
-              <div className="text-xl font-semibold text-slate-900">
-                Heures pleines / Heures creuses
-              </div>
-              <div className="mt-1 text-sm text-slate-500">
-                Deux prix et deux consommations
-              </div>
-            </button>
+            <div className="mt-6 space-y-4">
+              <button
+                type="button"
+                onClick={() => choisirContrat("standard")}
+                className="group w-full rounded-[24px] border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xl font-semibold text-slate-900">
+                      Standard
+                    </div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      Prix unique du kWh
+                    </div>
+                  </div>
+                  <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 transition group-hover:bg-slate-900 group-hover:text-white">
+                    Choisir
+                  </div>
+                </div>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => choisirContrat("autres")}
-              className="w-full rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:bg-slate-50"
-            >
-              <div className="text-xl font-semibold text-slate-900">Autres</div>
-              <div className="mt-1 text-sm text-slate-500">
-                Offre spécifique ou contrat non standard
-              </div>
-            </button>
+              <button
+                type="button"
+                onClick={() => choisirContrat("hp-hc")}
+                className="group w-full rounded-[24px] border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xl font-semibold text-slate-900">
+                      Heures pleines / Heures creuses
+                    </div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      Deux prix et deux consommations
+                    </div>
+                  </div>
+                  <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 transition group-hover:bg-slate-900 group-hover:text-white">
+                    Choisir
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => choisirContrat("autres")}
+                className="group w-full rounded-[24px] border border-slate-200 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xl font-semibold text-slate-900">
+                      Autres
+                    </div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      Offre spécifique ou contrat non standard
+                    </div>
+                  </div>
+                  <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 transition group-hover:bg-slate-900 group-hover:text-white">
+                    Choisir
+                  </div>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -578,31 +624,41 @@ export default function SimulationElectricitePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-5 py-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafc_45%,_#f8fafc_100%)] px-5 py-8">
       <div className="mx-auto max-w-md space-y-6">
         <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={retourChoixContrat}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="rounded-xl border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-white"
           >
-            ← Retour
+            ← Contrats
           </button>
+
           <div className="text-right">
-            <h1 className="text-2xl font-bold text-slate-900">
-              Simulation Électricité
-            </h1>
-            <p className="text-sm text-slate-500">Contrat : {typeContrat}</p>
+            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm inline-block">
+              UNIFEE
+            </div>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              Contrat :{" "}
+              <span className="font-semibold text-slate-800">
+                {typeContrat === "standard"
+                  ? "Standard"
+                  : typeContrat === "hp-hc"
+                  ? "Heures pleines / Heures creuses"
+                  : "Autres"}
+              </span>
+            </p>
           </div>
         </div>
 
-        <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="mb-3">
-              <h2 className="text-lg font-semibold text-slate-900">
+        <div className="space-y-5 rounded-[30px] border border-slate-200/80 bg-white/95 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur">
+          <div className="rounded-[24px] border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/60 p-5">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-slate-900">
                 Charger une facture
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="mt-1 text-sm leading-6 text-slate-500">
                 Essayez de préremplir automatiquement un maximum d’informations
               </p>
             </div>
@@ -611,7 +667,7 @@ export default function SimulationElectricitePage() {
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
+                className="rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-slate-800"
               >
                 Prendre une photo
               </button>
@@ -643,358 +699,371 @@ export default function SimulationElectricitePage() {
             />
 
             {facture && (
-              <p className="mt-3 text-sm text-green-600">
+              <div className="mt-3 rounded-2xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
                 Fichier sélectionné : {facture.name}
-              </p>
+              </div>
             )}
 
             <button
               type="button"
               onClick={extraireFacture}
               disabled={isExtracting}
-              className="mt-4 w-full rounded-2xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-4 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 font-semibold text-white shadow-sm transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isExtracting ? "Extraction en cours..." : "Extraire les informations"}
             </button>
 
             {messageExtraction && (
-              <p className="mt-3 text-sm text-slate-600">{messageExtraction}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{messageExtraction}</p>
             )}
           </div>
 
           {ocrText && (
-            <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <summary className="cursor-pointer text-sm font-medium text-slate-700">
+            <details className="rounded-[22px] border border-slate-200 bg-slate-50 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-slate-700">
                 Voir le texte OCR détecté
               </summary>
-              <pre className="mt-3 whitespace-pre-wrap text-xs text-slate-600">
+              <pre className="mt-3 whitespace-pre-wrap text-xs leading-5 text-slate-600">
                 {ocrText}
               </pre>
             </details>
           )}
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Informations client
-            </h2>
+          <section className="rounded-[24px] border border-slate-100 bg-white p-1">
+            <div className="space-y-4 rounded-[20px] bg-white p-4">
+              <h2 className="text-2xl font-bold text-slate-900">
+                Informations client
+              </h2>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Nom du client
-              </label>
-              <input
-                type="text"
-                value={nomClient}
-                onChange={(e) => setNomClient(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-                placeholder="Nom du client"
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">
+                  Nom du client
+                </label>
+                <input
+                  type="text"
+                  value={nomClient}
+                  onChange={(e) => setNomClient(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  placeholder="Nom du client"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Ville</label>
-              <input
-                type="text"
-                value={ville}
-                onChange={(e) => setVille(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-                placeholder="Ville"
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Ville</label>
+                <input
+                  type="text"
+                  value={ville}
+                  onChange={(e) => setVille(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  placeholder="Ville"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Fournisseur actuel
-              </label>
-              <input
-                type="text"
-                value={fournisseur}
-                onChange={(e) => setFournisseur(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-                placeholder="Nom du fournisseur"
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">
+                  Fournisseur actuel
+                </label>
+                <input
+                  type="text"
+                  value={fournisseur}
+                  onChange={(e) => setFournisseur(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  placeholder="Nom du fournisseur"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
-                Date de fin d’engagement
-              </label>
-              <input
-                type="date"
-                value={dateFin}
-                onChange={(e) => setDateFin(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">
+                  Date de fin d’engagement
+                </label>
+                <input
+                  type="date"
+                  value={dateFin}
+                  onChange={(e) => setDateFin(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
             </div>
-          </div>
+          </section>
 
           {typeContrat === "standard" && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">
+            <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
+              <h2 className="text-2xl font-bold text-slate-900">
                 Votre consommation actuelle
               </h2>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Consommation annuelle (kWh)
                 </label>
                 <input
                   type="number"
                   value={consommation}
                   onChange={(e) => setConsommation(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Consommation annuelle"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Prix actuel du kWh (€)
                 </label>
                 <input
                   type="number"
                   value={prixKwh}
                   onChange={(e) => setPrixKwh(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Prix actuel du kWh"
                 />
               </div>
-            </div>
+            </section>
           )}
 
           {typeContrat === "hp-hc" && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">
+            <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
+              <h2 className="text-2xl font-bold text-slate-900">
                 Votre consommation actuelle
               </h2>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Prix kWh heure pleine (€)
                 </label>
                 <input
                   type="number"
                   value={prixHP}
                   onChange={(e) => setPrixHP(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Prix HP"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Consommation heure pleine (kWh)
                 </label>
                 <input
                   type="number"
                   value={consoHP}
                   onChange={(e) => setConsoHP(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Consommation HP"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Prix kWh heure creuse (€)
                 </label>
                 <input
                   type="number"
                   value={prixHC}
                   onChange={(e) => setPrixHC(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Prix HC"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Consommation heure creuse (kWh)
                 </label>
                 <input
                   type="number"
                   value={consoHC}
                   onChange={(e) => setConsoHC(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Consommation HC"
                 />
               </div>
-            </div>
+            </section>
           )}
 
           {typeContrat === "autres" && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">
+            <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
+              <h2 className="text-2xl font-bold text-slate-900">
                 Votre consommation actuelle
               </h2>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Nom du contrat / formule
                 </label>
                 <input
                   type="text"
                   value={libelleAutreContrat}
                   onChange={(e) => setLibelleAutreContrat(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Exemple : offre pro spécifique"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Consommation annuelle (kWh)
                 </label>
                 <input
                   type="number"
                   value={consommation}
                   onChange={(e) => setConsommation(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Consommation annuelle"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Prix moyen constaté du kWh (€)
                 </label>
                 <input
                   type="number"
                   value={prixMoyenAutre}
                   onChange={(e) => setPrixMoyenAutre(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Prix moyen du kWh"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-semibold text-slate-700">
                   Détails complémentaires
                 </label>
                 <textarea
                   value={detailsAutreContrat}
                   onChange={(e) => setDetailsAutreContrat(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                   placeholder="Notes libres sur le contrat"
                   rows={4}
                 />
               </div>
-            </div>
+            </section>
           )}
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-900">
+          <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
+            <h2 className="text-2xl font-bold text-slate-900">
               Autres coûts de la facture actuelle
             </h2>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-semibold text-slate-700">
                 Abonnement actuel annuel (€)
               </label>
               <input
                 type="number"
                 value={abonnement}
                 onChange={(e) => setAbonnement(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 placeholder="Abonnement actuel"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-semibold text-slate-700">
                 Puissance souscrite (kVA)
               </label>
               <input
                 type="number"
                 value={puissanceSouscrite}
                 onChange={(e) => setPuissanceSouscrite(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 placeholder="Puissance souscrite"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-semibold text-slate-700">
                 Puissance max utilisée (kVA)
               </label>
               <input
                 type="number"
                 value={puissanceMax}
                 onChange={(e) => setPuissanceMax(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 placeholder="Puissance max utilisée"
               />
             </div>
-          </div>
+          </section>
 
           {typeContrat === "standard" && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">
+            <section className="space-y-4 rounded-[24px] bg-gradient-to-br from-slate-50 to-blue-50 p-5">
+              <h2 className="text-2xl font-bold text-slate-900">
                 Votre offre UNIFEE
               </h2>
 
-              <div className="rounded-2xl bg-slate-100 p-4">
-                <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
-                <p className="text-2xl font-bold text-slate-900">{prixUnifee} €</p>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">Prix UNIFEE du kWh</p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{prixUnifee} €</p>
               </div>
 
-              <div className="rounded-2xl bg-slate-100 p-4">
-                <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                <p className="text-2xl font-bold text-slate-900">{aboUnifee} €</p>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">
+                  Abonnement UNIFEE annuel
+                </p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{aboUnifee} €</p>
               </div>
-            </div>
+            </section>
           )}
 
           {typeContrat === "hp-hc" && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">
+            <section className="space-y-4 rounded-[24px] bg-gradient-to-br from-slate-50 to-blue-50 p-5">
+              <h2 className="text-2xl font-bold text-slate-900">
                 Votre offre UNIFEE
               </h2>
 
-              <div className="rounded-2xl bg-slate-100 p-4">
-                <p className="text-sm text-slate-500">Prix UNIFEE heure pleine</p>
-                <p className="text-2xl font-bold text-slate-900">{prixUnifeeHP} €</p>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">
+                  Prix UNIFEE heure pleine
+                </p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{prixUnifeeHP} €</p>
               </div>
 
-              <div className="rounded-2xl bg-slate-100 p-4">
-                <p className="text-sm text-slate-500">Prix UNIFEE heure creuse</p>
-                <p className="text-2xl font-bold text-slate-900">{prixUnifeeHC} €</p>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">
+                  Prix UNIFEE heure creuse
+                </p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{prixUnifeeHC} €</p>
               </div>
 
-              <div className="rounded-2xl bg-slate-100 p-4">
-                <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                <p className="text-2xl font-bold text-slate-900">{aboUnifeeHcHp} €</p>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">
+                  Abonnement UNIFEE annuel
+                </p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">
+                  {aboUnifeeHcHp} €
+                </p>
               </div>
-            </div>
+            </section>
           )}
 
           {typeContrat === "autres" && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">
+            <section className="space-y-4 rounded-[24px] bg-gradient-to-br from-slate-50 to-blue-50 p-5">
+              <h2 className="text-2xl font-bold text-slate-900">
                 Votre offre UNIFEE
               </h2>
 
-              <div className="rounded-2xl bg-slate-100 p-4">
-                <p className="text-sm text-slate-500">Prix UNIFEE du kWh</p>
-                <p className="text-2xl font-bold text-slate-900">{prixUnifee} €</p>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">Prix UNIFEE du kWh</p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{prixUnifee} €</p>
               </div>
 
-              <div className="rounded-2xl bg-slate-100 p-4">
-                <p className="text-sm text-slate-500">Abonnement UNIFEE annuel</p>
-                <p className="text-2xl font-bold text-slate-900">{aboUnifee} €</p>
+              <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">
+                  Abonnement UNIFEE annuel
+                </p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{aboUnifee} €</p>
               </div>
-            </div>
+            </section>
           )}
 
-          <div className="rounded-2xl bg-slate-100 p-4 text-sm text-slate-600">
-            💡 Les taxes et coûts réseau sont réglementés et identiques quel que soit
-            le fournisseur. Ils sont intégrés automatiquement dans le calcul.
+          <div className="rounded-[24px] bg-slate-100 p-5 text-base leading-8 text-slate-600">
+            💡 Les taxes et coûts réseau sont réglementés et identiques quel que soit le fournisseur. Ils sont intégrés automatiquement dans le calcul.
           </div>
 
           <button
             type="button"
             onClick={calculer}
-            className="w-full rounded-2xl bg-slate-900 px-4 py-4 font-semibold text-white transition hover:bg-slate-800"
+            className="w-full rounded-[22px] bg-slate-900 px-4 py-4 text-lg font-semibold text-white shadow-sm transition hover:bg-slate-800"
           >
             Calculer mes économies
           </button>
@@ -1005,12 +1074,12 @@ export default function SimulationElectricitePage() {
           coutUnifee !== null &&
           economieMensuelle !== null &&
           pourcentage !== null && (
-            <div className="space-y-5 rounded-3xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-6 shadow-sm">
+            <div className="space-y-5 rounded-[30px] border border-green-200 bg-gradient-to-b from-green-50 to-white p-6 shadow-[0_12px_40px_rgba(34,197,94,0.10)]">
               <div className="text-center">
-                <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
                   Économie estimée
                 </p>
-                <p className="mt-2 text-5xl font-bold text-green-600">
+                <p className="mt-3 text-5xl font-bold text-green-600">
                   {economieAnnuelle.toFixed(0)} €
                 </p>
                 <p className="mt-2 text-base text-slate-600">
@@ -1018,24 +1087,22 @@ export default function SimulationElectricitePage() {
                 </p>
               </div>
 
-              <div className="rounded-3xl bg-slate-900 p-5 text-center text-white">
+              <div className="rounded-[24px] bg-slate-900 p-5 text-center text-white">
                 <p className="text-sm uppercase tracking-wide text-slate-300">
                   Réduction estimée
                 </p>
-                <p className="mt-2 text-3xl font-bold">
-                  {pourcentage.toFixed(1)} %
-                </p>
+                <p className="mt-2 text-3xl font-bold">{pourcentage.toFixed(1)} %</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border bg-white p-4 text-center">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
                   <p className="text-sm text-slate-500">Coût actuel</p>
                   <p className="mt-1 text-xl font-semibold text-red-600">
                     {coutActuel.toFixed(0)} €
                   </p>
                 </div>
 
-                <div className="rounded-2xl border bg-white p-4 text-center">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
                   <p className="text-sm text-slate-500">Offre UNIFEE</p>
                   <p className="mt-1 text-xl font-semibold text-green-600">
                     {coutUnifee.toFixed(0)} €
@@ -1044,7 +1111,7 @@ export default function SimulationElectricitePage() {
               </div>
 
               {prixMoyenActuel !== null && (
-                <div className="rounded-2xl bg-white p-4 text-center">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
                   <p className="text-sm text-slate-500">Prix moyen actuel</p>
                   <p className="mt-1 text-lg font-semibold text-slate-900">
                     {prixMoyenActuel.toFixed(4)} €/kWh
@@ -1053,12 +1120,10 @@ export default function SimulationElectricitePage() {
               )}
 
               <div className="rounded-2xl bg-green-100 p-4 text-center">
-                <p className="text-sm text-green-800">
+                <p className="text-sm leading-7 text-green-800">
                   En passant chez <span className="font-bold">UNIFEE</span>, vous
                   économisez environ{" "}
-                  <span className="font-bold">
-                    {economieAnnuelle.toFixed(0)} €
-                  </span>{" "}
+                  <span className="font-bold">{economieAnnuelle.toFixed(0)} €</span>{" "}
                   par an sur votre électricité.
                 </p>
               </div>
