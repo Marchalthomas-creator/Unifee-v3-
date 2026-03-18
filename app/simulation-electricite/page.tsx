@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf";
 import Tesseract from "tesseract.js";
 
 type TypeContrat = "standard" | "hp-hc" | "autres";
+type Etape = "choix" | "formulaire";
 
 function genererId() {
   return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -143,6 +144,7 @@ export default function SimulationElectricitePage() {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [etape, setEtape] = useState<Etape>("choix");
   const [typeContrat, setTypeContrat] = useState<TypeContrat>("standard");
 
   const [nomClient, setNomClient] = useState("");
@@ -207,6 +209,17 @@ export default function SimulationElectricitePage() {
     setEconomieMensuelle(null);
     setPourcentage(null);
     setPrixMoyenActuel(null);
+  }
+
+  function choisirContrat(contrat: TypeContrat) {
+    setTypeContrat(contrat);
+    setEtape("formulaire");
+    resetResultats();
+  }
+
+  function retourChoixContrat() {
+    setEtape("choix");
+    resetResultats();
   }
 
   function gererSelectionFacture(file: File | null) {
@@ -512,70 +525,78 @@ export default function SimulationElectricitePage() {
     router.push("/historique");
   }
 
+  if (etape === "choix") {
+    return (
+      <main className="min-h-screen bg-slate-50 px-5 py-10">
+        <div className="mx-auto max-w-md space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-slate-900">
+              Simulation Électricité
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Sélectionnez d’abord le type de contrat
+            </p>
+          </div>
+
+          <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <button
+              type="button"
+              onClick={() => choisirContrat("standard")}
+              className="w-full rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:bg-slate-50"
+            >
+              <div className="text-xl font-semibold text-slate-900">Standard</div>
+              <div className="mt-1 text-sm text-slate-500">Prix unique du kWh</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => choisirContrat("hp-hc")}
+              className="w-full rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:bg-slate-50"
+            >
+              <div className="text-xl font-semibold text-slate-900">
+                Heures pleines / Heures creuses
+              </div>
+              <div className="mt-1 text-sm text-slate-500">
+                Deux prix et deux consommations
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => choisirContrat("autres")}
+              className="w-full rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:bg-slate-50"
+            >
+              <div className="text-xl font-semibold text-slate-900">Autres</div>
+              <div className="mt-1 text-sm text-slate-500">
+                Offre spécifique ou contrat non standard
+              </div>
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-8">
       <div className="mx-auto max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-900">
-            Simulation Électricité
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Comparez l’offre actuelle du client avec l’offre UNIFEE
-          </p>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={retourChoixContrat}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          >
+            ← Retour
+          </button>
+          <div className="text-right">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Simulation Électricité
+            </h1>
+            <p className="text-sm text-slate-500">Contrat : {typeContrat}</p>
+          </div>
         </div>
 
         <div className="space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Type de contrat
-            </h2>
-
-            <div className="grid grid-cols-1 gap-3">
-              <button
-                type="button"
-                onClick={() => setTypeContrat("standard")}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  typeContrat === "standard"
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <div className="font-semibold">Standard</div>
-                <div className="text-sm opacity-80">Prix unique du kWh</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTypeContrat("hp-hc")}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  typeContrat === "hp-hc"
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <div className="font-semibold">Heures pleines / Heures creuses</div>
-                <div className="text-sm opacity-80">
-                  Deux prix et deux consommations
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setTypeContrat("autres")}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  typeContrat === "autres"
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <div className="font-semibold">Autres</div>
-                <div className="text-sm opacity-80">
-                  Offre spécifique ou contrat non standard
-                </div>
-              </button>
-            </div>
-          </div>
-
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="mb-3">
               <h2 className="text-lg font-semibold text-slate-900">
@@ -665,7 +686,7 @@ export default function SimulationElectricitePage() {
                 type="text"
                 value={nomClient}
                 onChange={(e) => setNomClient(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                 placeholder="Nom du client"
               />
             </div>
@@ -676,7 +697,7 @@ export default function SimulationElectricitePage() {
                 type="text"
                 value={ville}
                 onChange={(e) => setVille(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                 placeholder="Ville"
               />
             </div>
@@ -689,7 +710,7 @@ export default function SimulationElectricitePage() {
                 type="text"
                 value={fournisseur}
                 onChange={(e) => setFournisseur(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                 placeholder="Nom du fournisseur"
               />
             </div>
@@ -702,7 +723,7 @@ export default function SimulationElectricitePage() {
                 type="date"
                 value={dateFin}
                 onChange={(e) => setDateFin(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
               />
             </div>
           </div>
@@ -721,7 +742,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={consommation}
                   onChange={(e) => setConsommation(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Consommation annuelle"
                 />
               </div>
@@ -734,7 +755,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={prixKwh}
                   onChange={(e) => setPrixKwh(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Prix actuel du kWh"
                 />
               </div>
@@ -755,7 +776,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={prixHP}
                   onChange={(e) => setPrixHP(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Prix HP"
                 />
               </div>
@@ -768,7 +789,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={consoHP}
                   onChange={(e) => setConsoHP(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Consommation HP"
                 />
               </div>
@@ -781,7 +802,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={prixHC}
                   onChange={(e) => setPrixHC(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Prix HC"
                 />
               </div>
@@ -794,7 +815,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={consoHC}
                   onChange={(e) => setConsoHC(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Consommation HC"
                 />
               </div>
@@ -815,7 +836,7 @@ export default function SimulationElectricitePage() {
                   type="text"
                   value={libelleAutreContrat}
                   onChange={(e) => setLibelleAutreContrat(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Exemple : offre pro spécifique"
                 />
               </div>
@@ -828,7 +849,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={consommation}
                   onChange={(e) => setConsommation(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Consommation annuelle"
                 />
               </div>
@@ -841,7 +862,7 @@ export default function SimulationElectricitePage() {
                   type="number"
                   value={prixMoyenAutre}
                   onChange={(e) => setPrixMoyenAutre(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Prix moyen du kWh"
                 />
               </div>
@@ -853,7 +874,7 @@ export default function SimulationElectricitePage() {
                 <textarea
                   value={detailsAutreContrat}
                   onChange={(e) => setDetailsAutreContrat(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                   placeholder="Notes libres sur le contrat"
                   rows={4}
                 />
@@ -874,7 +895,7 @@ export default function SimulationElectricitePage() {
                 type="number"
                 value={abonnement}
                 onChange={(e) => setAbonnement(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                 placeholder="Abonnement actuel"
               />
             </div>
@@ -887,7 +908,7 @@ export default function SimulationElectricitePage() {
                 type="number"
                 value={puissanceSouscrite}
                 onChange={(e) => setPuissanceSouscrite(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                 placeholder="Puissance souscrite"
               />
             </div>
@@ -900,7 +921,7 @@ export default function SimulationElectricitePage() {
                 type="number"
                 value={puissanceMax}
                 onChange={(e) => setPuissanceMax(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900 placeholder:text-slate-400"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3"
                 placeholder="Puissance max utilisée"
               />
             </div>
