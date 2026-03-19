@@ -138,6 +138,33 @@ function extraireDateFin(text: string) {
   return "";
 }
 
+function extraireHPHC(text: string) {
+  const clean = text.toLowerCase().replace(/\s+/g, " ");
+
+  const prixHP =
+    clean.match(/hp[^0-9]{0,20}([0-9]+[.,][0-9]+)/) ||
+    clean.match(/pleine[^0-9]{0,20}([0-9]+[.,][0-9]+)/);
+
+  const prixHC =
+    clean.match(/hc[^0-9]{0,20}([0-9]+[.,][0-9]+)/) ||
+    clean.match(/creuse[^0-9]{0,20}([0-9]+[.,][0-9]+)/);
+
+  const consoHP =
+    clean.match(/hp[^0-9]{0,30}([0-9\s]+)\s*kwh/) ||
+    clean.match(/pleine[^0-9]{0,30}([0-9\s]+)\s*kwh/);
+
+  const consoHC =
+    clean.match(/hc[^0-9]{0,30}([0-9\s]+)\s*kwh/) ||
+    clean.match(/creuse[^0-9]{0,30}([0-9\s]+)\s*kwh/);
+
+  return {
+    prixHP: prixHP?.[1] || "",
+    prixHC: prixHC?.[1] || "",
+    consoHP: consoHP?.[1] || "",
+    consoHC: consoHC?.[1] || "",
+  };
+}
+
 export default function SimulationElectricitePage() {
   const router = useRouter();
 
