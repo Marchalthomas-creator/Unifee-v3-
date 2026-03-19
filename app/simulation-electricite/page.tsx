@@ -212,15 +212,32 @@ export default function SimulationElectricitePage() {
   }
 
   function choisirContrat(contrat: TypeContrat) {
-    setTypeContrat(contrat);
-    setEtape("formulaire");
-    resetResultats();
-  }
+  setTypeContrat(contrat);
+  setEtape("formulaire");
+
+  // 🔥 RESET COMPLET
+  setFacture(null);
+  setOcrText("");
+  setMessageExtraction("");
+
+  if (photoInputRef.current) photoInputRef.current.value = "";
+  if (fileInputRef.current) fileInputRef.current.value = "";
+
+  resetResultats();
+}
 
   function retourChoixContrat() {
-    setEtape("choix");
-    resetResultats();
-  }
+  setEtape("choix");
+
+  setFacture(null);
+  setOcrText("");
+  setMessageExtraction("");
+
+  if (photoInputRef.current) photoInputRef.current.value = "";
+  if (fileInputRef.current) fileInputRef.current.value = "";
+
+  resetResultats();
+}
 
   function gererSelectionFacture(file: File | null) {
     if (!file) return;
@@ -298,19 +315,8 @@ export default function SimulationElectricitePage() {
         /max utilisée[^0-9]{0,25}([0-9]+[.,]?[0-9]*)\s*kva/i,
       ]);
 
-      const hpPriceMatch = text.match(
-        /(?:heures?\s*pleines?|hp)[^0-9]{0,40}([0-9]+[.,][0-9]+)/i
-      );
-      const hcPriceMatch = text.match(
-        /(?:heures?\s*creuses?|hc)[^0-9]{0,40}([0-9]+[.,][0-9]+)/i
-      );
+     const hpData = extraireHPHC( text)
 
-      const hpConsoMatch = text.match(
-        /(?:heures?\s*pleines?|hp)[^0-9]{0,50}([0-9\s]+[.,]?[0-9]*)\s*kwh/i
-      );
-      const hcConsoMatch = text.match(
-        /(?:heures?\s*creuses?|hc)[^0-9]{0,50}([0-9\s]+[.,]?[0-9]*)\s*kwh/i
-      );
 
       if (contratDetecte === "standard") {
         if (consoBase) setConsommation(consoBase);
@@ -318,11 +324,11 @@ export default function SimulationElectricitePage() {
       }
 
       if (contratDetecte === "hp-hc") {
-        if (hpPriceMatch?.[1]) setPrixHP(parseFrenchNumber(hpPriceMatch[1]));
-        if (hcPriceMatch?.[1]) setPrixHC(parseFrenchNumber(hcPriceMatch[1]));
-        if (hpConsoMatch?.[1]) setConsoHP(parseFrenchNumber(hpConsoMatch[1]));
-        if (hcConsoMatch?.[1]) setConsoHC(parseFrenchNumber(hcConsoMatch[1]));
-      }
+  if (hpData.prixHP) setPrixHP(parseFrenchNumber(hpData.prixHP));
+  if (hpData.prixHC) setPrixHC(parseFrenchNumber(hpData.prixHC));
+  if (hpData.consoHP) setConsoHP(parseFrenchNumber(hpData.consoHP));
+  if (hpData.consoHC) setConsoHC(parseFrenchNumber(hpData.consoHC));
+}
 
       if (contratDetecte === "autres") {
         if (consoBase) setConsommation(consoBase);
@@ -337,15 +343,17 @@ export default function SimulationElectricitePage() {
       if (puissanceMaxDetectee) setPuissanceMax(puissanceMaxDetectee);
 
       const hasUsefulData =
-        !!supplier ||
-        !!nomDetecte ||
-        !!villeDetectee ||
-        !!dateFinDetectee ||
-        !!consoBase ||
-        !!prixBase ||
-        !!abonnementDetecte ||
-        !!hpPriceMatch ||
-        !!hcPriceMatch;
+  !!supplier ||
+  !!nomDetecte ||
+  !!villeDetectee ||
+  !!dateFinDetectee ||
+  !!consoBase ||
+  !!prixBase ||
+  !!abonnementDetecte ||
+  !!hpData?.prixHP ||
+  !!hpData?.prixHC ||
+  !!hpData?.consoHP ||
+  !!hpData?.consoHC;
 
       setMessageExtraction(
         hasUsefulData
