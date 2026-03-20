@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   body.set("client_secret", clientSecret);
 
   const res = await fetch(
-    "https://gw.ext.prod-sandbox.api.enedis.fr/oauth2/v3/token",
+    "https://gw.ext.prod-sandbox.api.enedis.fr/v1/oauth2/token",
     {
       method: "POST",
       headers: {
