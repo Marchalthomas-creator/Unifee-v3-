@@ -715,7 +715,14 @@ export default function SimulationElectricitePage() {
                 Importer une facture
               </button>
             </div>
-
+<button
+  onClick={() => {
+    window.location.href = "/api/enedis/connect";
+  }}
+  className="mt-4 w-full rounded-xl bg-green-600 text-white py-3 font-semibold"
+>
+  Connecter mon compteur Enedis
+</button>
             <input
               ref={photoInputRef}
               type="file"
