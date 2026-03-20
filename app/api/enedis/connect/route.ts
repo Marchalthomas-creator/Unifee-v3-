@@ -4,7 +4,7 @@ export async function GET() {
   const clientId = process.env.ENEDIS_CLIENT_ID;
   const redirectUri = process.env.ENEDIS_REDIRECT_URI;
 
-  const url = new URL("https://gw.ext.prod-sandbox.api.enedis.fr/v1/oauth2/authorize");
+  const url = new URL("https://gw.ext.prod-sandbox.api.enedis.fr/v3/authorize");
 
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", clientId!);
