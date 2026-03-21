@@ -17,11 +17,6 @@ export default function HomePage() {
             Bienvenue
           </h1>
 
-          <p className="mt-4 text-lg leading-8 text-slate-600">
-  Simuler rapidement vos économies potentielles avec Unifee, expérience simple, rapide et claire.
-</p>
-        </div>
-
         <div className="rounded-[34px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-600">
@@ -29,12 +24,11 @@ export default function HomePage() {
             </p>
 
             <h2 className="mt-3 text-3xl font-bold text-slate-900">
-              Il n'est pas trop tard pour faire des économies ! 
+              Simuler rapidement vos économies potentielles avec Unifee
             </h2>
 
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              Accédez aux simulateurs pour réaliser une estimation client, ou ouvrez
-              l’espace administrateur pour gérer les paramètres et l’historique.
+              Accédez aux simulateurs pour réaliser une estimation, expérience simple, rapide et claire.
             </p>
           </div>
 
