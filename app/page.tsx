@@ -18,9 +18,8 @@ export default function HomePage() {
           </h1>
 
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            Comparez facilement les offres d’énergie de vos clients et estimez les
-            économies potentielles avec une expérience simple, rapide et claire.
-          </p>
+  Simuler rapidement vos économies potentielles avec Unifee, expérience simple, rapide et claire.
+</p>
         </div>
 
         <div className="rounded-[34px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur">
@@ -30,7 +29,7 @@ export default function HomePage() {
             </p>
 
             <h2 className="mt-3 text-3xl font-bold text-slate-900">
-              Que souhaitez-vous faire ?
+              Il n'est pas trop tard pour faire des économies ! 
             </h2>
 
             <p className="mt-3 text-sm leading-7 text-slate-500">
