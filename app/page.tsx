@@ -17,6 +17,8 @@ export default function HomePage() {
             Bienvenue
           </h1>
 
+        </div>
+
         <div className="rounded-[34px] border border-slate-200/80 bg-white/95 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-blue-600">
