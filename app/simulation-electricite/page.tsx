@@ -58,12 +58,8 @@ function detectSupplier(text: string) {
   if (lower.includes("engie")) return "Engie";
   if (lower.includes("ekwateur")) return "Ekwateur";
   if (lower.includes("eni")) return "ENI";
-  if (lower.includes("ohm energie") || lower.includes("ohm énergie")) {
-    return "Ohm Énergie";
-  }
-  if (lower.includes("mint energie") || lower.includes("mint énergie")) {
-    return "Mint Énergie";
-  }
+  if (lower.includes("ohm energie") || lower.includes("ohm énergie")) return "Ohm Énergie";
+  if (lower.includes("mint energie") || lower.includes("mint énergie")) return "Mint Énergie";
 
   return "";
 }
@@ -369,9 +365,7 @@ export default function SimulationElectricitePage() {
       if (contratDetecte === "autres") {
         if (consoBase) setConsommation(consoBase);
         if (prixBase) setPrixMoyenAutre(parseFrenchNumber(prixBase));
-        if (!libelleAutreContrat) {
-          setLibelleAutreContrat("Autre contrat détecté");
-        }
+        if (!libelleAutreContrat) setLibelleAutreContrat("Autre contrat détecté");
       }
 
       if (abonnementDetecte) setAbonnement(abonnementDetecte);
@@ -399,9 +393,7 @@ export default function SimulationElectricitePage() {
       );
     } catch (error) {
       console.error(error);
-      setMessageExtraction(
-        "Impossible d’analyser la facture. Essaie avec une photo plus nette."
-      );
+      setMessageExtraction("Impossible d’analyser la facture. Essaie avec une photo plus nette.");
     } finally {
       setIsExtracting(false);
     }
@@ -412,7 +404,7 @@ export default function SimulationElectricitePage() {
 
     if (!accordEnedis) {
       setMessageEnedis(
-        "Veuillez cocher la case de consentement avant de connecter le compteur Enedis."
+        "Veuillez cocher la case « J’accepte » avant de connecter le compteur Enedis."
       );
       return;
     }
@@ -432,7 +424,6 @@ export default function SimulationElectricitePage() {
     if (typeContrat === "standard") {
       const conso = toNumber(consommation);
       const prix = toNumber(prixKwh);
-
       const prixU = toNumber(prixUnifee);
       const aboU = toNumber(aboUnifee);
 
@@ -463,7 +454,6 @@ export default function SimulationElectricitePage() {
     if (typeContrat === "autres") {
       const conso = toNumber(consommation);
       const prix = toNumber(prixMoyenAutre);
-
       const prixU = toNumber(prixUnifee);
       const aboU = toNumber(aboUnifee);
 
@@ -542,9 +532,7 @@ export default function SimulationElectricitePage() {
       return;
     }
 
-    const historiqueActuel = JSON.parse(
-      localStorage.getItem("unifee-simulations") || "[]"
-    );
+    const historiqueActuel = JSON.parse(localStorage.getItem("unifee-simulations") || "[]");
 
     const nouvelleSimulation = {
       id: genererId(),
@@ -669,6 +657,26 @@ export default function SimulationElectricitePage() {
                   </div>
                 </div>
               </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/simulation-complete")}
+                className="w-full rounded-[24px] border border-emerald-200 bg-emerald-50 p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100/70 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xl font-semibold text-slate-900">
+                      Électricité + Gaz
+                    </div>
+                    <div className="mt-1 text-sm text-slate-600">
+                      Je simule mes économies d’électricité + gaz
+                    </div>
+                  </div>
+                  <div className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+                    Nouveau
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -783,8 +791,8 @@ export default function SimulationElectricitePage() {
                 className="mt-1 h-4 w-4 rounded border-slate-300"
               />
               <span>
-                Le client accepte que Unifee accède à ses informations Enedis afin
-                d’analyser sa consommation et d’établir une simulation ou un devis.
+                J’accepte que UNIFEE accède à mes informations Enedis afin d’analyser ma
+                consommation et d’établir une simulation ou un devis.
               </span>
             </label>
 
@@ -858,9 +866,7 @@ export default function SimulationElectricitePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">
-                  PRM / PDL
-                </label>
+                <label className="text-sm font-semibold text-slate-700">PRM / PDL</label>
                 <input
                   type="text"
                   value={prmPdl}
@@ -869,7 +875,8 @@ export default function SimulationElectricitePage() {
                   placeholder="Exemple : 12345678901234"
                 />
                 <p className="text-xs leading-5 text-slate-500">
-                  Le PRM / PDL se trouve généralement sur la facture d’électricité.
+                  Vous pouvez trouver votre numéro PRM en appuyant plusieurs fois sur votre
+                  compteur Linky, ou sur votre facture si le numéro y figure.
                 </p>
               </div>
             </div>
@@ -1130,6 +1137,14 @@ export default function SimulationElectricitePage() {
           >
             Calculer mes économies
           </button>
+
+          <button
+            type="button"
+            onClick={() => router.push("/simulation-complete")}
+            className="w-full rounded-[22px] border border-emerald-300 bg-emerald-50 px-4 py-4 text-lg font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+          >
+            Je simule mes économies d’électricité + gaz
+          </button>
         </div>
 
         {economieAnnuelle !== null &&
@@ -1173,20 +1188,22 @@ export default function SimulationElectricitePage() {
                 </div>
               </div>
 
-              {prixMoyenActuel !== null && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-                  <p className="text-sm text-slate-500">Prix moyen actuel</p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
-                    {prixMoyenActuel.toFixed(4)} €/kWh
-                  </p>
-                </div>
-              )}
+              {typeContrat === "hp-hc" &&
+                prixMoyenActuel !== null &&
+                prixMoyenActuel > 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                    <p className="text-sm text-slate-500">Prix moyen actuel</p>
+                    <p className="mt-1 text-lg font-semibold text-slate-900">
+                      {prixMoyenActuel.toFixed(4)} €/kWh
+                    </p>
+                  </div>
+                )}
 
               <div className="rounded-2xl bg-green-100 p-4 text-center">
                 <p className="text-sm leading-7 text-green-800">
                   En passant chez <span className="font-bold">UNIFEE</span>, vous économisez environ{" "}
-                  <span className="font-bold">{economieAnnuelle.toFixed(0)} €</span>{" "}
-                  par an sur votre électricité.
+                  <span className="font-bold">{economieAnnuelle.toFixed(0)} €</span> par an sur votre
+                  électricité.
                 </p>
               </div>
 
