@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 export default function HomePage() {
+  console.log("👀 Visite page ACCUEIL", new Date().toISOString());
   const router = useRouter();
 
   return (

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 export default function ChoixSimulateurPage() {
+    console.log("👀 Visite CHOIX SIMULATEUR", new Date().toISOString());
   const router = useRouter();
 
   return (
