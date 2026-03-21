@@ -658,25 +658,6 @@ export default function SimulationElectricitePage() {
                 </div>
               </button>
 
-              <button
-                type="button"
-                onClick={() => router.push("/simulation-complete")}
-                className="w-full rounded-[24px] border border-emerald-200 bg-emerald-50 p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-100/70 hover:shadow-md"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-xl font-semibold text-slate-900">
-                      Électricité + Gaz
-                    </div>
-                    <div className="mt-1 text-sm text-slate-600">
-                      Je simule mes économies d’électricité + gaz
-                    </div>
-                  </div>
-                  <div className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
-                    Nouveau
-                  </div>
-                </div>
-              </button>
             </div>
           </div>
         </div>
@@ -1138,13 +1119,6 @@ export default function SimulationElectricitePage() {
             Calculer mes économies
           </button>
 
-          <button
-            type="button"
-            onClick={() => router.push("/simulation-complete")}
-            className="w-full rounded-[22px] border border-emerald-300 bg-emerald-50 px-4 py-4 text-lg font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
-          >
-            Je simule mes économies d’électricité + gaz
-          </button>
         </div>
 
         {economieAnnuelle !== null &&
