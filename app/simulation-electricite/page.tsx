@@ -75,11 +75,13 @@ function detectTypeContrat(text: string): TypeContrat {
     lower.includes("heure creuse") ||
     lower.includes("heures creuses") ||
     lower.includes(" hc ") ||
+    lower.includes("h.c") ||
     lower.includes("hc/");
   const hasHP =
     lower.includes("heure pleine") ||
     lower.includes("heures pleines") ||
     lower.includes(" hp ") ||
+    lower.includes("h.p") ||
     lower.includes("hp/");
 
   if (hasHC || hasHP) return "hp-hc";
@@ -143,19 +145,23 @@ function extraireHPHC(text: string) {
 
   const prixHP =
     clean.match(/hp[^0-9]{0,20}([0-9]+[.,][0-9]+)/) ||
+    clean.match(/heures?\s*pleines?[^0-9]{0,20}([0-9]+[.,][0-9]+)/) ||
     clean.match(/pleine[^0-9]{0,20}([0-9]+[.,][0-9]+)/);
 
   const prixHC =
     clean.match(/hc[^0-9]{0,20}([0-9]+[.,][0-9]+)/) ||
+    clean.match(/heures?\s*creuses?[^0-9]{0,20}([0-9]+[.,][0-9]+)/) ||
     clean.match(/creuse[^0-9]{0,20}([0-9]+[.,][0-9]+)/);
 
   const consoHP =
-    clean.match(/hp[^0-9]{0,30}([0-9\s]+)\s*kwh/) ||
-    clean.match(/pleine[^0-9]{0,30}([0-9\s]+)\s*kwh/);
+    clean.match(/hp[^0-9]{0,30}([0-9\s]+[.,]?[0-9]*)\s*kwh/) ||
+    clean.match(/heures?\s*pleines?[^0-9]{0,30}([0-9\s]+[.,]?[0-9]*)\s*kwh/) ||
+    clean.match(/pleine[^0-9]{0,30}([0-9\s]+[.,]?[0-9]*)\s*kwh/);
 
   const consoHC =
-    clean.match(/hc[^0-9]{0,30}([0-9\s]+)\s*kwh/) ||
-    clean.match(/creuse[^0-9]{0,30}([0-9\s]+)\s*kwh/);
+    clean.match(/hc[^0-9]{0,30}([0-9\s]+[.,]?[0-9]*)\s*kwh/) ||
+    clean.match(/heures?\s*creuses?[^0-9]{0,30}([0-9\s]+[.,]?[0-9]*)\s*kwh/) ||
+    clean.match(/creuse[^0-9]{0,30}([0-9\s]+[.,]?[0-9]*)\s*kwh/);
 
   return {
     prixHP: prixHP?.[1] || "",
@@ -178,6 +184,7 @@ export default function SimulationElectricitePage() {
   const [ville, setVille] = useState("");
   const [fournisseur, setFournisseur] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [prmPdl, setPrmPdl] = useState("");
 
   const [consommation, setConsommation] = useState("");
   const [prixKwh, setPrixKwh] = useState("");
@@ -199,6 +206,9 @@ export default function SimulationElectricitePage() {
   const [messageExtraction, setMessageExtraction] = useState("");
   const [ocrText, setOcrText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
+
+  const [accordEnedis, setAccordEnedis] = useState(false);
+  const [messageEnedis, setMessageEnedis] = useState("");
 
   const [prixUnifee, setPrixUnifee] = useState("0.18");
   const [aboUnifee, setAboUnifee] = useState("120");
@@ -238,33 +248,28 @@ export default function SimulationElectricitePage() {
     setPrixMoyenActuel(null);
   }
 
+  function resetPieceJointe() {
+    setFacture(null);
+    setOcrText("");
+    setMessageExtraction("");
+    setMessageEnedis("");
+    setAccordEnedis(false);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
   function choisirContrat(contrat: TypeContrat) {
-  setTypeContrat(contrat);
-  setEtape("formulaire");
-
-  // 🔥 RESET COMPLET
-  setFacture(null);
-  setOcrText("");
-  setMessageExtraction("");
-
-  if (photoInputRef.current) photoInputRef.current.value = "";
-  if (fileInputRef.current) fileInputRef.current.value = "";
-
-  resetResultats();
-}
+    setTypeContrat(contrat);
+    setEtape("formulaire");
+    resetPieceJointe();
+    resetResultats();
+  }
 
   function retourChoixContrat() {
-  setEtape("choix");
-
-  setFacture(null);
-  setOcrText("");
-  setMessageExtraction("");
-
-  if (photoInputRef.current) photoInputRef.current.value = "";
-  if (fileInputRef.current) fileInputRef.current.value = "";
-
-  resetResultats();
-}
+    setEtape("choix");
+    resetPieceJointe();
+    resetResultats();
+  }
 
   function gererSelectionFacture(file: File | null) {
     if (!file) return;
@@ -312,6 +317,11 @@ export default function SimulationElectricitePage() {
       const dateFinDetectee = extraireDateFin(text);
       if (dateFinDetectee) setDateFin(dateFinDetectee);
 
+      const prmDetecte = extraireValeur(text, [
+        /(?:prm|pdl)[^0-9]{0,10}([0-9]{10,14})/i,
+      ]);
+      if (prmDetecte) setPrmPdl(prmDetecte);
+
       const contratDetecte = detectTypeContrat(text);
       setTypeContrat(contratDetecte);
 
@@ -342,8 +352,7 @@ export default function SimulationElectricitePage() {
         /max utilisée[^0-9]{0,25}([0-9]+[.,]?[0-9]*)\s*kva/i,
       ]);
 
-     const hpData = extraireHPHC( text)
-
+      const hpData = extraireHPHC(text);
 
       if (contratDetecte === "standard") {
         if (consoBase) setConsommation(consoBase);
@@ -351,15 +360,15 @@ export default function SimulationElectricitePage() {
       }
 
       if (contratDetecte === "hp-hc") {
-  if (hpData.prixHP) setPrixHP(parseFrenchNumber(hpData.prixHP));
-  if (hpData.prixHC) setPrixHC(parseFrenchNumber(hpData.prixHC));
-  if (hpData.consoHP) setConsoHP(parseFrenchNumber(hpData.consoHP));
-  if (hpData.consoHC) setConsoHC(parseFrenchNumber(hpData.consoHC));
-}
+        if (hpData.prixHP) setPrixHP(parseFrenchNumber(hpData.prixHP));
+        if (hpData.prixHC) setPrixHC(parseFrenchNumber(hpData.prixHC));
+        if (hpData.consoHP) setConsoHP(parseFrenchNumber(hpData.consoHP));
+        if (hpData.consoHC) setConsoHC(parseFrenchNumber(hpData.consoHC));
+      }
 
       if (contratDetecte === "autres") {
         if (consoBase) setConsommation(consoBase);
-        if (prixBase) setPrixMoyenAutre(prixBase);
+        if (prixBase) setPrixMoyenAutre(parseFrenchNumber(prixBase));
         if (!libelleAutreContrat) {
           setLibelleAutreContrat("Autre contrat détecté");
         }
@@ -370,17 +379,18 @@ export default function SimulationElectricitePage() {
       if (puissanceMaxDetectee) setPuissanceMax(puissanceMaxDetectee);
 
       const hasUsefulData =
-  !!supplier ||
-  !!nomDetecte ||
-  !!villeDetectee ||
-  !!dateFinDetectee ||
-  !!consoBase ||
-  !!prixBase ||
-  !!abonnementDetecte ||
-  !!hpData?.prixHP ||
-  !!hpData?.prixHC ||
-  !!hpData?.consoHP ||
-  !!hpData?.consoHC;
+        !!supplier ||
+        !!nomDetecte ||
+        !!villeDetectee ||
+        !!dateFinDetectee ||
+        !!prmDetecte ||
+        !!consoBase ||
+        !!prixBase ||
+        !!abonnementDetecte ||
+        !!hpData.prixHP ||
+        !!hpData.prixHC ||
+        !!hpData.consoHP ||
+        !!hpData.consoHC;
 
       setMessageExtraction(
         hasUsefulData
@@ -395,6 +405,19 @@ export default function SimulationElectricitePage() {
     } finally {
       setIsExtracting(false);
     }
+  }
+
+  function connecterCompteurEnedis() {
+    setMessageEnedis("");
+
+    if (!accordEnedis) {
+      setMessageEnedis(
+        "Veuillez cocher la case de consentement avant de connecter le compteur Enedis."
+      );
+      return;
+    }
+
+    window.location.href = "/api/enedis/connect";
   }
 
   function calculer() {
@@ -485,22 +508,23 @@ export default function SimulationElectricitePage() {
     doc.text(`Ville : ${ville || "-"}`, 20, 43);
     doc.text(`Fournisseur : ${fournisseur || "-"}`, 20, 51);
     doc.text(`Type de contrat : ${typeContrat}`, 20, 59);
+    doc.text(`PRM / PDL : ${prmPdl || "-"}`, 20, 67);
 
     doc.setFontSize(14);
-    doc.text("Résultat de la simulation", 20, 76);
+    doc.text("Résultat de la simulation", 20, 84);
 
     doc.setFontSize(12);
-    doc.text(`Coût actuel annuel estimé : ${coutActuel.toFixed(0)} €`, 20, 89);
-    doc.text(`Coût annuel estimé avec UNIFEE : ${coutUnifee.toFixed(0)} €`, 20, 97);
-    doc.text(`Économie annuelle estimée : ${economieAnnuelle.toFixed(0)} €`, 20, 109);
-    doc.text(`Économie mensuelle estimée : ${economieMensuelle.toFixed(0)} €`, 20, 117);
-    doc.text(`Réduction estimée : ${pourcentage.toFixed(1)} %`, 20, 125);
+    doc.text(`Coût actuel annuel estimé : ${coutActuel.toFixed(0)} €`, 20, 97);
+    doc.text(`Coût annuel estimé avec UNIFEE : ${coutUnifee.toFixed(0)} €`, 20, 105);
+    doc.text(`Économie annuelle estimée : ${economieAnnuelle.toFixed(0)} €`, 20, 117);
+    doc.text(`Économie mensuelle estimée : ${economieMensuelle.toFixed(0)} €`, 20, 125);
+    doc.text(`Réduction estimée : ${pourcentage.toFixed(1)} %`, 20, 133);
 
     doc.setTextColor(0, 128, 0);
     doc.text(
       "Les taxes et coûts réseau réglementés sont intégrés automatiquement dans le calcul.",
       20,
-      141
+      149
     );
 
     doc.setTextColor(0, 0, 0);
@@ -530,6 +554,7 @@ export default function SimulationElectricitePage() {
       ville,
       fournisseur,
       dateFin,
+      prmPdl,
       consommation,
       prixKwh,
       prixHP,
@@ -572,7 +597,7 @@ export default function SimulationElectricitePage() {
             >
               ← Retour
             </button>
-            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
+            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm">
               UNIFEE
             </div>
           </div>
@@ -586,8 +611,7 @@ export default function SimulationElectricitePage() {
                 Choisissez le type de contrat
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Sélectionnez d’abord la bonne structure tarifaire pour afficher le
-                formulaire adapté.
+                Sélectionnez d’abord la structure tarifaire pour afficher le formulaire adapté.
               </p>
             </div>
 
@@ -599,12 +623,8 @@ export default function SimulationElectricitePage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-xl font-semibold text-slate-900">
-                      Standard
-                    </div>
-                    <div className="mt-1 text-sm text-slate-500">
-                      Prix unique du kWh
-                    </div>
+                    <div className="text-xl font-semibold text-slate-900">Standard</div>
+                    <div className="mt-1 text-sm text-slate-500">Prix unique du kWh</div>
                   </div>
                   <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 transition group-hover:bg-slate-900 group-hover:text-white">
                     Choisir
@@ -639,9 +659,7 @@ export default function SimulationElectricitePage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-xl font-semibold text-slate-900">
-                      Autres
-                    </div>
+                    <div className="text-xl font-semibold text-slate-900">Autres</div>
                     <div className="mt-1 text-sm text-slate-500">
                       Offre spécifique ou contrat non standard
                     </div>
@@ -671,7 +689,7 @@ export default function SimulationElectricitePage() {
           </button>
 
           <div className="text-right">
-            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm inline-block">
+            <div className="inline-block rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
               UNIFEE
             </div>
             <p className="mt-2 text-sm font-medium text-slate-500">
@@ -690,9 +708,7 @@ export default function SimulationElectricitePage() {
         <div className="space-y-5 rounded-[30px] border border-slate-200/80 bg-white/95 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="rounded-[24px] border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/60 p-5">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-slate-900">
-                Charger une facture
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Charger une facture</h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
                 Essayez de préremplir automatiquement un maximum d’informations
               </p>
@@ -715,14 +731,7 @@ export default function SimulationElectricitePage() {
                 Importer une facture
               </button>
             </div>
-<button
-  onClick={() => {
-    window.location.href = "/api/enedis/connect";
-  }}
-  className="mt-4 w-full rounded-xl bg-green-600 text-white py-3 font-semibold"
->
-  Connecter mon compteur Enedis
-</button>
+
             <input
               ref={photoInputRef}
               type="file"
@@ -755,6 +764,34 @@ export default function SimulationElectricitePage() {
               {isExtracting ? "Extraction en cours..." : "Extraire les informations"}
             </button>
 
+            <button
+              type="button"
+              onClick={connecterCompteurEnedis}
+              className="mt-3 w-full rounded-2xl bg-green-600 px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-green-700"
+            >
+              Connecter mon compteur Enedis
+            </button>
+
+            <label className="mt-3 flex items-start gap-3 rounded-2xl bg-white/80 p-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={accordEnedis}
+                onChange={(e) => {
+                  setAccordEnedis(e.target.checked);
+                  if (e.target.checked) setMessageEnedis("");
+                }}
+                className="mt-1 h-4 w-4 rounded border-slate-300"
+              />
+              <span>
+                Le client accepte que Unifee accède à ses informations Enedis afin
+                d’analyser sa consommation et d’établir une simulation ou un devis.
+              </span>
+            </label>
+
+            {messageEnedis && (
+              <p className="mt-3 text-sm leading-6 text-red-600">{messageEnedis}</p>
+            )}
+
             {messageExtraction && (
               <p className="mt-3 text-sm leading-6 text-slate-600">{messageExtraction}</p>
             )}
@@ -771,16 +808,12 @@ export default function SimulationElectricitePage() {
             </details>
           )}
 
-          <section className="rounded-[24px] border border-slate-100 bg-white p-1">
-            <div className="space-y-4 rounded-[20px] bg-white p-4">
-              <h2 className="text-2xl font-bold text-slate-900">
-                Informations client
-              </h2>
+          <section className="rounded-[24px] border border-slate-100 bg-white p-5">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-slate-900">Informations client</h2>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">
-                  Nom du client
-                </label>
+                <label className="text-sm font-semibold text-slate-700">Nom du client</label>
                 <input
                   type="text"
                   value={nomClient}
@@ -802,9 +835,7 @@ export default function SimulationElectricitePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">
-                  Fournisseur actuel
-                </label>
+                <label className="text-sm font-semibold text-slate-700">Fournisseur actuel</label>
                 <input
                   type="text"
                   value={fournisseur}
@@ -825,14 +856,28 @@ export default function SimulationElectricitePage() {
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                 />
               </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">
+                  PRM / PDL
+                </label>
+                <input
+                  type="text"
+                  value={prmPdl}
+                  onChange={(e) => setPrmPdl(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  placeholder="Exemple : 12345678901234"
+                />
+                <p className="text-xs leading-5 text-slate-500">
+                  Le PRM / PDL se trouve généralement sur la facture d’électricité.
+                </p>
+              </div>
             </div>
           </section>
 
           {typeContrat === "standard" && (
             <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
-              <h2 className="text-2xl font-bold text-slate-900">
-                Votre consommation actuelle
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900">Votre consommation actuelle</h2>
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">
@@ -864,9 +909,7 @@ export default function SimulationElectricitePage() {
 
           {typeContrat === "hp-hc" && (
             <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
-              <h2 className="text-2xl font-bold text-slate-900">
-                Votre consommation actuelle
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900">Votre consommation actuelle</h2>
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">
@@ -924,9 +967,7 @@ export default function SimulationElectricitePage() {
 
           {typeContrat === "autres" && (
             <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
-              <h2 className="text-2xl font-bold text-slate-900">
-                Votre consommation actuelle
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900">Votre consommation actuelle</h2>
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">
@@ -983,9 +1024,7 @@ export default function SimulationElectricitePage() {
           )}
 
           <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
-            <h2 className="text-2xl font-bold text-slate-900">
-              Autres coûts de la facture actuelle
-            </h2>
+            <h2 className="text-2xl font-bold text-slate-900">Autres coûts de la facture actuelle</h2>
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">
@@ -1029,9 +1068,7 @@ export default function SimulationElectricitePage() {
 
           {typeContrat === "standard" && (
             <section className="space-y-4 rounded-[24px] bg-gradient-to-br from-slate-50 to-blue-50 p-5">
-              <h2 className="text-2xl font-bold text-slate-900">
-                Votre offre UNIFEE
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900">Votre offre UNIFEE</h2>
 
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
                 <p className="text-sm font-medium text-slate-500">Prix UNIFEE du kWh</p>
@@ -1039,9 +1076,7 @@ export default function SimulationElectricitePage() {
               </div>
 
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
-                <p className="text-sm font-medium text-slate-500">
-                  Abonnement UNIFEE annuel
-                </p>
+                <p className="text-sm font-medium text-slate-500">Abonnement UNIFEE annuel</p>
                 <p className="mt-1 text-3xl font-bold text-slate-900">{aboUnifee} €</p>
               </div>
             </section>
@@ -1049,40 +1084,28 @@ export default function SimulationElectricitePage() {
 
           {typeContrat === "hp-hc" && (
             <section className="space-y-4 rounded-[24px] bg-gradient-to-br from-slate-50 to-blue-50 p-5">
-              <h2 className="text-2xl font-bold text-slate-900">
-                Votre offre UNIFEE
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900">Votre offre UNIFEE</h2>
 
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
-                <p className="text-sm font-medium text-slate-500">
-                  Prix UNIFEE heure pleine
-                </p>
+                <p className="text-sm font-medium text-slate-500">Prix UNIFEE heure pleine</p>
                 <p className="mt-1 text-3xl font-bold text-slate-900">{prixUnifeeHP} €</p>
               </div>
 
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
-                <p className="text-sm font-medium text-slate-500">
-                  Prix UNIFEE heure creuse
-                </p>
+                <p className="text-sm font-medium text-slate-500">Prix UNIFEE heure creuse</p>
                 <p className="mt-1 text-3xl font-bold text-slate-900">{prixUnifeeHC} €</p>
               </div>
 
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
-                <p className="text-sm font-medium text-slate-500">
-                  Abonnement UNIFEE annuel
-                </p>
-                <p className="mt-1 text-3xl font-bold text-slate-900">
-                  {aboUnifeeHcHp} €
-                </p>
+                <p className="text-sm font-medium text-slate-500">Abonnement UNIFEE annuel</p>
+                <p className="mt-1 text-3xl font-bold text-slate-900">{aboUnifeeHcHp} €</p>
               </div>
             </section>
           )}
 
           {typeContrat === "autres" && (
             <section className="space-y-4 rounded-[24px] bg-gradient-to-br from-slate-50 to-blue-50 p-5">
-              <h2 className="text-2xl font-bold text-slate-900">
-                Votre offre UNIFEE
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900">Votre offre UNIFEE</h2>
 
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
                 <p className="text-sm font-medium text-slate-500">Prix UNIFEE du kWh</p>
@@ -1090,9 +1113,7 @@ export default function SimulationElectricitePage() {
               </div>
 
               <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
-                <p className="text-sm font-medium text-slate-500">
-                  Abonnement UNIFEE annuel
-                </p>
+                <p className="text-sm font-medium text-slate-500">Abonnement UNIFEE annuel</p>
                 <p className="mt-1 text-3xl font-bold text-slate-900">{aboUnifee} €</p>
               </div>
             </section>
@@ -1163,8 +1184,7 @@ export default function SimulationElectricitePage() {
 
               <div className="rounded-2xl bg-green-100 p-4 text-center">
                 <p className="text-sm leading-7 text-green-800">
-                  En passant chez <span className="font-bold">UNIFEE</span>, vous
-                  économisez environ{" "}
+                  En passant chez <span className="font-bold">UNIFEE</span>, vous économisez environ{" "}
                   <span className="font-bold">{economieAnnuelle.toFixed(0)} €</span>{" "}
                   par an sur votre électricité.
                 </p>
