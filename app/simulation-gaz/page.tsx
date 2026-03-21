@@ -127,6 +127,7 @@ export default function SimulationGazPage() {
   const [ville, setVille] = useState("");
   const [fournisseur, setFournisseur] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [prmPdl, setPrmPdl] = useState("");
 
   const [consommation, setConsommation] = useState("");
   const [prixKwh, setPrixKwh] = useState("");
@@ -165,6 +166,14 @@ export default function SimulationGazPage() {
     setEconomieAnnuelle(null);
     setEconomieMensuelle(null);
     setPourcentage(null);
+  }
+
+  function resetPieceJointe() {
+    setFacture(null);
+    setOcrText("");
+    setMessageExtraction("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function gererSelectionFacture(file: File | null) {
@@ -213,6 +222,11 @@ export default function SimulationGazPage() {
       const dateFinDetectee = extraireDateFin(text);
       if (dateFinDetectee) setDateFin(dateFinDetectee);
 
+      const prmDetecte = extraireValeur(text, [
+        /(?:prm|pdl)[^0-9]{0,10}([0-9]{10,14})/i,
+      ]);
+      if (prmDetecte) setPrmPdl(prmDetecte);
+
       const consoDetectee = extraireValeur(text, [
         /consommation annuelle[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
         /consommation[^0-9]{0,25}([0-9\s]+[.,]?[0-9]*)\s*kwh/i,
@@ -238,6 +252,7 @@ export default function SimulationGazPage() {
         !!nomDetecte ||
         !!villeDetectee ||
         !!dateFinDetectee ||
+        !!prmDetecte ||
         !!consoDetectee ||
         !!prixDetecte ||
         !!abonnementDetecte;
@@ -304,22 +319,23 @@ export default function SimulationGazPage() {
     doc.text(`Client : ${nomClient || "-"}`, 20, 35);
     doc.text(`Ville : ${ville || "-"}`, 20, 43);
     doc.text(`Fournisseur : ${fournisseur || "-"}`, 20, 51);
+    doc.text(`PRM / PDL : ${prmPdl || "-"}`, 20, 59);
 
     doc.setFontSize(14);
-    doc.text("Résultat de la simulation", 20, 70);
+    doc.text("Résultat de la simulation", 20, 76);
 
     doc.setFontSize(12);
-    doc.text(`Coût actuel annuel estimé : ${coutActuel.toFixed(0)} €`, 20, 83);
-    doc.text(`Coût annuel estimé avec UNIFEE : ${coutUnifee.toFixed(0)} €`, 20, 91);
-    doc.text(`Économie annuelle estimée : ${economieAnnuelle.toFixed(0)} €`, 20, 103);
-    doc.text(`Économie mensuelle estimée : ${economieMensuelle.toFixed(0)} €`, 20, 111);
-    doc.text(`Réduction estimée : ${pourcentage.toFixed(1)} %`, 20, 119);
+    doc.text(`Coût actuel annuel estimé : ${coutActuel.toFixed(0)} €`, 20, 89);
+    doc.text(`Coût annuel estimé avec UNIFEE : ${coutUnifee.toFixed(0)} €`, 20, 97);
+    doc.text(`Économie annuelle estimée : ${economieAnnuelle.toFixed(0)} €`, 20, 109);
+    doc.text(`Économie mensuelle estimée : ${economieMensuelle.toFixed(0)} €`, 20, 117);
+    doc.text(`Réduction estimée : ${pourcentage.toFixed(1)} %`, 20, 125);
 
     doc.setTextColor(0, 128, 0);
     doc.text(
       "Les taxes et coûts réseau réglementés sont intégrés automatiquement dans le calcul.",
       20,
-      135
+      141
     );
 
     doc.setTextColor(0, 0, 0);
@@ -348,6 +364,7 @@ export default function SimulationGazPage() {
       ville,
       fournisseur,
       dateFin,
+      prmPdl,
       consommation,
       prixKwh,
       abonnement,
@@ -367,7 +384,7 @@ export default function SimulationGazPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafc_45%,_#f8fafc_100%)] px-5 py-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#eefbf7_0%,_#f8fafc_45%,_#f8fafc_100%)] px-5 py-8">
       <div className="mx-auto max-w-md space-y-6">
         <div className="flex items-center justify-between">
           <button
@@ -379,12 +396,10 @@ export default function SimulationGazPage() {
           </button>
 
           <div className="text-right">
-            <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm inline-block">
+            <div className="inline-block rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm">
               UNIFEE
             </div>
-            <p className="mt-2 text-sm font-medium text-slate-500">
-              Simulation gaz
-            </p>
+            <p className="mt-2 text-sm font-medium text-slate-500">Simulation gaz</p>
           </div>
         </div>
 
@@ -403,9 +418,7 @@ export default function SimulationGazPage() {
 
           <div className="rounded-[24px] border border-slate-200 bg-gradient-to-br from-slate-50 to-emerald-50/60 p-5">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-slate-900">
-                Charger une facture
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Charger une facture</h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
                 Essayez de préremplir automatiquement un maximum d’informations
               </p>
@@ -478,9 +491,7 @@ export default function SimulationGazPage() {
           )}
 
           <section className="space-y-4 rounded-[24px] border border-slate-100 bg-white p-5">
-            <h2 className="text-2xl font-bold text-slate-900">
-              Informations client
-            </h2>
+            <h2 className="text-2xl font-bold text-slate-900">Informations client</h2>
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">
@@ -529,6 +540,22 @@ export default function SimulationGazPage() {
                 onChange={(e) => setDateFin(e.target.value)}
                 className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700">
+                PRM / PDL
+              </label>
+              <input
+                type="text"
+                value={prmPdl}
+                onChange={(e) => setPrmPdl(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                placeholder="Exemple : 12345678901234"
+              />
+              <p className="text-xs leading-5 text-slate-500">
+                Si disponible sur la facture, tu peux l’indiquer ici.
+              </p>
             </div>
           </section>
 
@@ -657,8 +684,7 @@ export default function SimulationGazPage() {
 
               <div className="rounded-2xl bg-green-100 p-4 text-center">
                 <p className="text-sm leading-7 text-green-800">
-                  En passant chez <span className="font-bold">UNIFEE</span>, vous
-                  économisez environ{" "}
+                  En passant chez <span className="font-bold">UNIFEE</span>, vous économisez environ{" "}
                   <span className="font-bold">{economieAnnuelle.toFixed(0)} €</span>{" "}
                   par an sur votre gaz.
                 </p>
