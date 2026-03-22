@@ -14,7 +14,7 @@ export default function HomePage() {
   <img
     src="/logo-unifee.png"
     alt="Unifee"
-    className="h-36 md:h-40 object-contain drop-shadow-lg"
+    className="h-40 md:h-50 object-contain drop-shadow-lg"
   />
 </div>
 
@@ -67,8 +67,7 @@ export default function HomePage() {
             <p>• Simuler les économies en électricité</p>
             <p>• Simuler les économies en gaz</p>
             <p>• Comparer une offre combinée électricité + gaz</p>
-            <p>• Préremplir les données via facture ou connexion compteur</p>
-            <p>• Enregistrer et retrouver les simulations dans l’historique</p>
+            <p>• Préremplir les données via facture et connexion compteur</p>
           </div>
         </div>
       </div>
