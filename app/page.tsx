@@ -10,11 +10,11 @@ export default function HomePage() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_#eaf2ff_0%,_#f8fafc_45%,_#f8fafc_100%)] px-5 py-10">
       <div className="mx-auto max-w-md space-y-6">
         <div className="text-center">
-          <div className="flex flex-col items-center">
+          <div className="flex justify-center mb-8">
   <img
     src="/logo-unifee.png"
     alt="Unifee"
-    className="h-20 object-contain mb-4"
+    className="h-36 md:h-40 object-contain drop-shadow-lg"
   />
 </div>
 
